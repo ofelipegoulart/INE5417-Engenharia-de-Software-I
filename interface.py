@@ -43,6 +43,8 @@ for row in range(BOARD_SIZE):
     def square_click(event):
         item_id = event.widget.find_closest(event.x, event.y)[0]
         current_color = canvas.itemcget(item_id, "fill")
+        if(current_color == "yellow"):
+            return
         new_color = "yellow"
         canvas.itemconfigure(item_id, fill=new_color)
         canvas.after(500, lambda: canvas.itemconfigure(item_id, fill=current_color))
