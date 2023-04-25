@@ -54,3 +54,4 @@ for row in range(BOARD_SIZE):
 
 if __name__ == "__main__":
     root.mainloop()
+''
