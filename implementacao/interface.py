@@ -1,7 +1,9 @@
 import tkinter as tk
 
+from py_netgames_client.tkinter_client.PyNetgamesServerProxy import PyNetgamesServerProxy
+from py_netgames_client.tkinter_client.PyNetgamesServerListener import PyNetgamesServerListener
 
-class Tabuleiro:
+class ActorPlayer(PyNetgamesServerListener):
     def __init__(self, tk):
         self.canvas = None
         self.partidaEmAndamento = False
@@ -49,6 +51,10 @@ class Tabuleiro:
                                            row * SQUARE_SIZE + SQUARE_SIZE - piece_size // 2,
                                            fill="red")
 
+        self.add_listener()
+        self.send_connect()
+        root.mainloop()
+
         # def square_click(event):
         #     item_id = event.widget.find_closest(event.x, event.y)[0]
         #     current_color = self.canvas.itemcget(item_id, "fill")
@@ -60,3 +66,32 @@ class Tabuleiro:
         #
         # for item_id in self.canvas.find_all():
         #     self.canvas.tag_bind(item_id, "<Button-1>", square_click)
+    def receive_connection_success(self):
+        pass
+
+    def add_listener(self):
+        self.server_proxy = PyNetgamesServerProxy()
+        self.server_proxy.add_listener(self)
+
+    def send_connect(self):
+        self.server_proxy.send_connect("wss://py-netgames-server.fly.dev")
+
+    def receive_connection_success(self):
+        print('**************************CONECTADO********************')
+        self.send_match()
+
+    def send_match(self):
+        self.server_proxy.send_match(2)
+
+    def receive_disconnect(self):
+        pass
+
+    def receive_error(self, error: Exception):
+        pass
+
+    def receive_match(self, match):
+        print("RECEBEUUUUU")
+
+    def receive_move(self, move):
+        pass
+
