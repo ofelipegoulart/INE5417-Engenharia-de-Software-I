@@ -3,12 +3,15 @@ import tkinter as tk
 from py_netgames_client.tkinter_client.PyNetgamesServerProxy import PyNetgamesServerProxy
 from py_netgames_client.tkinter_client.PyNetgamesServerListener import PyNetgamesServerListener
 
+from implementacao.Tabuleiro import Tabuleiro
+
 
 class ActorPlayer(PyNetgamesServerListener):
     def __init__(self, tk):
         super().__init__()
         self.canvas = None
         self.tk = tk
+        self.tabuleiro = Tabuleiro(tk)
         self.partidaEmAndamento = False
         self.construirTabuleiro()
 
