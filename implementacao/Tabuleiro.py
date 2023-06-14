@@ -19,25 +19,83 @@ class Tabuleiro:
         self.match_status: int = 0
         self.positions: list = []
         self.rodadasSemCaptura: int = 0
-        self.pecaClicada: bool = False
+        self.pecaClicada: Peca = None
         self.proposta_empate: bool = False
 
     def click(self, linha: int, coluna: int, local_turn: bool):
         state = self.getEstado()
         proposta_empate = self.get_proposta_empate()
+        # Verifica se há uma proposta de empate
         if not proposta_empate:
             if linha and coluna is not None:
+                # Verifica se é a vez do jogador
                 if local_turn:
-                    if not self.pecaClicada:
-                        if self.verificarCasa(self.getPositionByLinhaColuna(linha, coluna)):
-                            self.pecaClicada = True
+                    # Pega a posicao que foi clicada
+                    positionClicada = self.getPositionByLinhaColuna(linha, coluna)
+                    # Verifica se existe uma peca já selecionada
+                    if self.pecaClicada is None:
+                        if self.verificarCasa(positionClicada):
+                            self.setPecaClicada(positionClicada.ocupante)
+                            # TODO: Talvez, ao invés de um booleano, essa flag poderia ser o objeto Peca
+                    # Caso não haja, ele tenta validar a jogada
                     else:
-                        position = self.getPositionByLinhaColuna(linha, coluna)
-                        self.verificarPossiveisCasas(position)
+                        jogadas = self.verificarPossiveisCasas(
+                            positionClicada.ocupante)  # TODO: Precisa receber uma peca
 
-    # def verificarPossiveisCasas(self, position: Position):
-        
-        
+                        if not jogadas:
+                            # Se jogadas estiver vazia, jogada Inválida
+                            pass
+                        else:
+                            for jogada in jogadas:
+                                if positionClicada.linha == jogada.linha and positionClicada.coluna == jogada.coluna:
+                                    return  # Jogada válida
+
+    def verificarPossiveisCasas(self, peca: Peca):
+        jogadas: list[Position] = []
+        linha = peca.casa.linha
+        coluna = peca.casa.coluna
+        if peca.cor == CorPeca.PRETO:
+            direcao = -1
+        else:
+            direcao = 1
+
+        # Verificar movimento na diagonal esquerda
+        if coluna > 0:
+            nova_linha = linha + direcao
+            nova_coluna = coluna - 1
+            if self.getPositionByLinhaColuna(nova_linha, nova_coluna).ocupante is None:
+                # TODO: Talvez precise verificar se está fora do tabuleiro
+                jogadas.append(self.getPositionByLinhaColuna(nova_linha, nova_coluna))
+
+        # Verificar movimento na diagonal direita
+        if coluna <= 7:
+            nova_linha = linha + direcao
+            nova_coluna = coluna - 1
+            if self.getPositionByLinhaColuna(nova_linha, nova_coluna).ocupante is None:
+                # TODO: Talvez precise verificar se está fora do tabuleiro
+                jogadas.append(self.getPositionByLinhaColuna(nova_linha, nova_coluna))
+
+        # Possibilita a dama ir para a outra direcao
+        if peca.dama:
+            direcao = direcao * -1
+
+            # Verificar movimento na diagonal esquerda
+            if coluna > 0:
+                nova_linha = linha + direcao
+                nova_coluna = coluna - 1
+                if self.getPositionByLinhaColuna(nova_linha, nova_coluna).ocupante is None:
+                    ##TODO: Talvez precise verificar se está fora do tabuleiro
+                    jogadas.append(self.getPositionByLinhaColuna(nova_linha, nova_coluna))
+
+            # Verificar movimento na diagonal direita
+            if coluna <= 7:
+                nova_linha = linha + direcao
+                nova_coluna = coluna - 1
+                if self.getPositionByLinhaColuna(nova_linha, nova_coluna).ocupante is None:
+                    ##TODO: Talvez precise verificar se está fora do tabuleiro
+                    jogadas.append(self.getPositionByLinhaColuna(nova_linha, nova_coluna))
+
+        return jogadas
 
     def getPositionByLinhaColuna(self, linha: int, coluna: int) -> Position:
         for position in self.positions:
@@ -132,7 +190,7 @@ class Tabuleiro:
     def getPecaClicada(self):
         return self.pecaClicada
 
-    def setPecaClicada(self, pecaClicada: bool):
+    def setPecaClicada(self, pecaClicada: Peca):
         self.pecaClicada = pecaClicada
 
     def set_proposta_empate(self, proposta_empate: bool):
