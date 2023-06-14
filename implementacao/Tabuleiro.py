@@ -27,6 +27,7 @@ class Tabuleiro:
         proposta_empate = self.get_proposta_empate()
         # Verifica se há uma proposta de empate
         if not proposta_empate:
+            # Verifica se o clique foi em linha em coluna ao invés de oferecer empate
             if linha and coluna is not None:
                 # Verifica se é a vez do jogador
                 if local_turn:
@@ -35,6 +36,7 @@ class Tabuleiro:
                     # Verifica se existe uma peca já selecionada
                     if self.pecaClicada is None:
                         if self.verificarCasa(positionClicada):
+                            #Muda valor de peça selecionada
                             self.setPecaClicada(positionClicada.ocupante)
                             # TODO: Talvez, ao invés de um booleano, essa flag poderia ser o objeto Peca
                     # Caso não haja, ele tenta validar a jogada
@@ -105,7 +107,9 @@ class Tabuleiro:
     def verificarCasa(self, position: Position):
         if position.casa == CorCasa.PRETO:
             peca = position.informarOcupante(position.linha, position.coluna)
+            # Verifica se a casa selecionada tem uma peça do usuário
             if peca.jogador == self.jogadorLocal:
+                # Verifica se a peça que está na casa não está bloqueada
                 if not self.pecaBloqueada(peca):
                     return True
 
