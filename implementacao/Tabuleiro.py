@@ -64,18 +64,20 @@ class Tabuleiro:
         # Verificar movimento na diagonal esquerda
         if coluna > 0:
             nova_linha = linha + direcao
-            nova_coluna = coluna - 1
-            if self.getPositionByLinhaColuna(nova_linha, nova_coluna).ocupante is None:
-                # TODO: Talvez precise verificar se está fora do tabuleiro
-                jogadas.append(self.getPositionByLinhaColuna(nova_linha, nova_coluna))
-
-        # Verificar movimento na diagonal direita
-        if coluna <= 7:
-            nova_linha = linha + direcao
-            nova_coluna = coluna - 1
-            if self.getPositionByLinhaColuna(nova_linha, nova_coluna).ocupante is None:
-                # TODO: Talvez precise verificar se está fora do tabuleiro
-                jogadas.append(self.getPositionByLinhaColuna(nova_linha, nova_coluna))
+            nova_coluna_esquerda = coluna - 1
+            nova_coluna_direta = coluna + 1
+            # Testa pra ver se saiu do limite
+                # Testa pra ver se a casa da esquerda não tem ocupante
+            if self.getPositionByLinhaColuna(nova_linha, nova_coluna_esquerda).ocupante is None:
+                    # Testa pra ver se a casa da direita não tem ocupante
+                if self.getPositionByLinhaColuna(nova_linha, nova_coluna_direta).ocupante is None:
+                        # Pode jogar pros dois lados
+                    jogadas.append(self.getPositionByLinhaColuna(nova_linha, nova_coluna_direta))
+                    jogadas.append(self.getPositionByLinhaColuna(nova_linha, nova_coluna_esquerda))
+                # possivelJogada pra esquerda
+                    # existe ocupante na posição final quando eu comer a peça
+                    # se nao testar se na posição final da jogada ainda existe possiblidade de comer mais damas (enquanto puder, eu preciso continuar checando)
+                    # Essa função de checagem precisa saber se a peça a ser mexida é dama ou não (se ela for, precisa checar nas duas diagonais)
 
         # Possibilita a dama ir para a outra direcao
         if peca.dama:
