@@ -6,17 +6,18 @@ import CorCasa
 
 class Position(object):
 
-    def __init__(self):
+    def __init__(self, linha: int, coluna: int, cor: CorCasa):
         self.ocupante: Peca = None
-        self.casa: CorCasa = None
-        self.linha: int = None
-        self.coluna: int = None
+        self.casa: CorCasa = cor
+        self.linha: int = linha
+        self.coluna: int = coluna
 
-    def informarOcupada(self, linha: int, coluna: int) -> bool:
-        pass
+    # def informarOcupada(self, linha: int, coluna: int) -> bool:
+    #     pass
 
-    def informarOcupante(self, linha: int, coluna: int) -> Peca:
-        pass
+    # def informarOcupante(self, linha: int, coluna: int) -> Peca:
+
+    #     pass
 
     def getCasa(self) -> CorCasa:
         return self.casa
@@ -38,3 +39,6 @@ class Position(object):
 
     def validPositions(self) -> list:
         pass
+
+    def getOcupante(self) -> Peca:
+        return self.ocupante

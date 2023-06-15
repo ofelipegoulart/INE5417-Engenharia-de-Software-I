@@ -3,16 +3,18 @@
 import CorPeca
 from typing import List
 
+from implementacao.Peca import Peca
+
 
 class Jogador(object):
 
     def __init__(self):
         self.nome: str = None
-        self.pecas: list = None
+        self.pecas: list[Peca] = []
         self.daVez: bool = None
         self.vencedor: bool = None
-        self.damas: int = None
-        self.pecasNorm: int = None
+        self.damas: int = 0
+        self.pecasNorm: int = 12
 
     def getNome(self) -> str:
         return self.nome

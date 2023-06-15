@@ -5,12 +5,14 @@ import Lance
 import Jogador
 from typing import List
 
+from implementacao.Position import Position
+
 
 class Peca(object):
-    def __init__(self):
-        self.cor: CorPeca = None
+    def __init__(self, cor: CorPeca):
+        self.cor: CorPeca = cor
         self.dama: bool = False
-        self.casa: Lance = None
+        # self.casa: Position = position
         self.jogador: Jogador = None
 
     def getCor(self) -> CorPeca:
