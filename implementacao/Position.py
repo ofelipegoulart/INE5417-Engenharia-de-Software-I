@@ -1,5 +1,7 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
+import json
+import jsonpickle
 import Peca
 import CorCasa
 
@@ -18,6 +20,9 @@ class Position(object):
     # def informarOcupante(self, linha: int, coluna: int) -> Peca:
 
     #     pass
+
+    # def toJSON(self):
+    #     return jsonpickle.
 
     def getCasa(self) -> CorCasa:
         return self.casa
@@ -42,3 +47,6 @@ class Position(object):
 
     def getOcupante(self) -> Peca:
         return self.ocupante
+    
+    def setOcupante(self, ocupante: Peca) -> Peca:
+        self.ocupante = ocupante

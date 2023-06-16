@@ -23,6 +23,7 @@ class Tabuleiro:
         self.proposta_empate: bool = False
         self.jogadas = None
         self.errorLocalMessage = None
+        self.pecasCapturadas: list[Peca] = []
 
     def click(self, linha: int, coluna: int, local_turn: bool):
         state = self.getEstado()
@@ -54,7 +55,6 @@ class Tabuleiro:
                     elif self.pecaClicada is not None:
                         # if()
                         for position in self.jogadas:
-                            print(position.getLinha(), position.getColuna())
                             if position.coluna == positionClicada.coluna and position.linha == positionClicada.linha:
                                 return True
                         self.pecaClicada = None
@@ -70,6 +70,7 @@ class Tabuleiro:
                         #             return  # Jogada válida
                 elif not local_turn:
                     self.errorLocalMessage = "Não é seu turno"
+                    return False
             elif linha is None and coluna is None:
                 return False
 
@@ -97,13 +98,17 @@ class Tabuleiro:
                     nova_linha, nova_coluna_esquerda))
             else:
                 while self.getPositionByLinhaColuna(nova_linha, nova_coluna_esquerda).ocupante is not None or self.getPositionByLinhaColuna(nova_linha, nova_coluna_esquerda).ocupante is not None:
-                    if self.getPositionByLinhaColuna(nova_linha, nova_coluna_esquerda).ocupante is not None:
+                    if self.getPositionByLinhaColuna(nova_linha, nova_coluna_esquerda).ocupante is not None and self.getPositionByLinhaColuna(nova_linha, nova_coluna_esquerda).getOcupante().getJogador() == self.jogadorLocal:
                         jogadas.append(self.getPositionByLinhaColuna(
                             nova_linha + direcao, nova_coluna_esquerda - 1))
+                        self.pecasCapturadas.append(self.getPositionByLinhaColuna(
+                            nova_linha, nova_coluna_esquerda).getOcupante())
                         nova_coluna_esquerda -= 1
-                    if self.getPositionByLinhaColuna(nova_linha, nova_coluna_direita).ocupante is not None:
+                    if self.getPositionByLinhaColuna(nova_linha, nova_coluna_direita).ocupante is not None and self.getPositionByLinhaColuna(nova_linha, nova_coluna_direita).getOcupante().getJogador() == self.jogadorLocal:
                         jogadas.append(self.getPositionByLinhaColuna(
                             nova_linha + direcao, nova_coluna_direita + 1))
+                        self.pecasCapturadas.append(self.getPositionByLinhaColuna(
+                            nova_linha, nova_coluna_direita).getOcupante())
                         nova_coluna_direita += 1
             return jogadas
 
@@ -152,12 +157,11 @@ class Tabuleiro:
         if position.casa == CorCasa.PRETO:
             # Verifica se a casa selecionada tem uma peça do usuário
 
-            peca1 = self.getPositionByLinhaColuna(position.linha, position.coluna).getOcupante()
+            peca1 = self.getPositionByLinhaColuna(
+                position.linha, position.coluna).getOcupante()
             if peca1 is not None:
                 peca = position.ocupante
-                print(peca.jogador, self.jogadorLocal)
                 if peca.jogador == self.jogadorLocal:
-                    print("teste")
                     # Verifica se a peça que está na casa não está bloqueada
                     if not self.pecaBloqueada(position):
                         return True
@@ -233,11 +237,11 @@ class Tabuleiro:
     def getStatus(self) -> int:
         pass
 
-    def getPositions(self) -> Position:
-        pass
+    def getPositions(self) -> list[Position]:
+        return self.positions
 
-    def setPositions(self, position):
-        pass
+    def setPositions(self, positions: list[Position]):
+        self.positions = positions
 
     def evaluateEndGame(self, lance: Lance) -> bool:
         pass
@@ -262,3 +266,14 @@ class Tabuleiro:
 
     def get_proposta_empate(self):
         return self.proposta_empate
+
+    def getPecasCapturadas(self):
+        return self.pecasCapturadas
+
+    def trocarTurnos(self):
+        if self.jogadorLocal.daVez:
+            self.jogadorRemoto.daVez = True
+            self.jogadorLocal.daVez = False
+        else:
+            self.jogadorLocal.daVez = True
+            self.jogadorRemoto.daVez = False

@@ -1,3 +1,5 @@
+from ast import Dict
+import json
 import tkinter as tk
 
 from py_netgames_client.tkinter_client.PyNetgamesServerProxy import PyNetgamesServerProxy
@@ -10,6 +12,7 @@ from implementacao.Peca import Peca
 from implementacao.Position import Position
 from tkinter import messagebox
 from implementacao.Tabuleiro import Tabuleiro
+import jsonpickle
 
 
 class ActorPlayer(PyNetgamesServerListener):
@@ -19,17 +22,19 @@ class ActorPlayer(PyNetgamesServerListener):
         self.tk = tk
         self.tabuleiro = Tabuleiro(tk)
         self.partidaEmAndamento = False
+        self.BOARD_SIZE = 8
+        self.SQUARE_SIZE = 50
+        self.WINDOW_WIDTH = 8 * 50
+        self.WINDOW_HEIGHT = 8 * 50
+        self.retangulos = {}
+        self.match_id = None
+        self.server_proxy: PyNetgamesServerProxy = PyNetgamesServerProxy()
         self.construirTabuleiro()
 
     def construirTabuleiro(self):
-        BOARD_SIZE = 8
-        SQUARE_SIZE = 50
-        WINDOW_WIDTH = BOARD_SIZE * SQUARE_SIZE
-        WINDOW_HEIGHT = BOARD_SIZE * SQUARE_SIZE
 
         root = self.tk
         menu_bar = tk.Menu(root)
-        self.retangulos = {}
         self.jogo_menu = tk.Menu(menu_bar, tearoff=0)
         self.jogo_menu.add_command(label="Iniciar", command=self.send_connect)
         self.jogo_menu.add_command(label="Desistir")
@@ -38,53 +43,42 @@ class ActorPlayer(PyNetgamesServerListener):
         self.jogo_menu.entryconfig("Desistir", state="disable")
         self.jogo_menu.entryconfig("Oferecer empate", state="disable")
         menu_bar.add_cascade(label="Jogo", menu=self.jogo_menu)
-        root.geometry(f"{WINDOW_WIDTH}x{WINDOW_HEIGHT}")
+        root.geometry(f"{self.WINDOW_WIDTH}x{self.WINDOW_HEIGHT}")
         root.title("Damas")
 
-        self.canvas = tk.Canvas(root, width=WINDOW_WIDTH, height=WINDOW_HEIGHT)
+        self.canvas = tk.Canvas(
+            root, width=self.WINDOW_WIDTH, height=self.WINDOW_HEIGHT)
         self.canvas.pack()
 
-        for row in range(BOARD_SIZE):
-            for col in range(BOARD_SIZE):
-                x1 = col * SQUARE_SIZE
-                y1 = row * SQUARE_SIZE
-                x2 = x1 + SQUARE_SIZE
-                y2 = y1 + SQUARE_SIZE
+        for row in range(self.BOARD_SIZE):
+            for col in range(self.BOARD_SIZE):
+                x1 = col * self.SQUARE_SIZE
+                y1 = row * self.SQUARE_SIZE
+                x2 = x1 + self.SQUARE_SIZE
+                y2 = y1 + self.SQUARE_SIZE
                 if (row + col) % 2 == 0:
                     # self.tabuleiro.positions
                     self.tabuleiro.positions.append(
                         Position(linha=row, coluna=col, cor=CorCasa.BRANCO))
-                    retangulo = self.canvas.create_rectangle(
-                        x1, y1, x2, y2, fill="white", tags=f"square-{row}-{col}")
+
                 else:
                     self.tabuleiro.positions.append(
                         Position(linha=row, coluna=col, cor=CorCasa.PRETO))
-                    retangulo = self.canvas.create_rectangle(
-                        x1, y1, x2, y2, fill="gray", tags=f"square-{row}-{col}")
-                self.retangulos[(row, col)] = retangulo
-
-        piece_size = SQUARE_SIZE // 2
-        for row in range(BOARD_SIZE):
-            for col in range(BOARD_SIZE):
+                    # retangulo = self.canvas.create_rectangle(
+                    #     x1, y1, x2, y2, fill="gray", tags=f"square-{row}-{col}")
+                # self.retangulos[(row, col)] = retangulo
+        for row in range(self.BOARD_SIZE):
+            for col in range(self.BOARD_SIZE):
                 if (row + col) % 2 != 0:
                     if row < 3:
                         pos = self.tabuleiro.getPositionByLinhaColuna(
                             linha=row, coluna=col)
-                        pos.ocupante = Peca(cor=CorPeca.PRETO)
-                        self.canvas.create_oval(col * SQUARE_SIZE + piece_size // 2,
-                                                row * SQUARE_SIZE + piece_size // 2,
-                                                col * SQUARE_SIZE + SQUARE_SIZE - piece_size // 2,
-                                                row * SQUARE_SIZE + SQUARE_SIZE - piece_size // 2,
-                                                fill="black", tags=f"square-{row}-{col}")
+                        pos.setOcupante(Peca(cor=CorPeca.PRETO))
+
                     elif row > 4:
                         self.tabuleiro.getPositionByLinhaColuna(
                             linha=row, coluna=col).ocupante = Peca(cor=CorPeca.VERMELHO)
-                        self.canvas.create_oval(col * SQUARE_SIZE + piece_size // 2,
-                                                row * SQUARE_SIZE + piece_size // 2,
-                                                col * SQUARE_SIZE + SQUARE_SIZE - piece_size // 2,
-                                                row * SQUARE_SIZE + SQUARE_SIZE - piece_size // 2,
-                                                fill="red", tags=f"square-{row}-{col}")
-
+        self.montarPositcoes()
         self.add_listener()
         root.config(menu=menu_bar)
 
@@ -105,8 +99,6 @@ class ActorPlayer(PyNetgamesServerListener):
             row, col = [int(x) for x in tags[0].split('-')[1:]]
 
             # Imprime a linha e a coluna
-            print("Linha:", row)
-            print("Coluna:", col)
             temJogada = self.tabuleiro.click(
                 linha=row, coluna=col, local_turn=self.tabuleiro.jogadorLocal.daVez)
             if not temJogada and self.tabuleiro.pecaClicada is None:
@@ -119,28 +111,51 @@ class ActorPlayer(PyNetgamesServerListener):
                     if rectangle is not None:
                         self.canvas.itemconfigure(rectangle, fill="yellow")
             elif temJogada:
-                print("casa clicada inicial -> ", self.tabuleiro.getPecaClicada().getColuna(), self.tabuleiro.getPecaClicada().getLinha())
-                # self.realizarLance()
-                # for jogada in self.tabuleiro.getJogadas():
-                #     rectangle = self.retangulos.get(
-                #         (jogada.getLinha(), jogada.getColuna()))
-                #     if rectangle is not None:
-                #         self.canvas.itemconfigure(rectangle, fill="gray")
-                #
-                # self.tabuleiro.getPecaClicada().setColuna(col)
-                # self.tabuleiro.getPecaClicada().setLinha(row)
-                # rectangle = self.retangulos.get((self.tabuleiro.getPecaClicada().getLinha(),
-                #                                  self.tabuleiro.getPecaClicada().getColuna()))
-                # self.canvas.itemconfigure(
-                #     rectangle, fill="gray", tags=f"square-{row}-{col}")
-                # self.canvas.create_oval(col * SQUARE_SIZE + piece_size // 2,
-                #                         row * SQUARE_SIZE + piece_size // 2,
-                #                         col * SQUARE_SIZE + SQUARE_SIZE - piece_size // 2,
-                #                         row * SQUARE_SIZE + SQUARE_SIZE - piece_size // 2,
-                #                         fill="red", tags=f"square-{row}-{col}")
-                # self.tabuleiro.setPecaClicada(None)
+                posInicial = self.tabuleiro.getPecaClicada()
+                posFinal = self.tabuleiro.getPositionByLinhaColuna(linha=row, coluna=col)
+                print(jsonpickle.encode(posInicial))
+                move = {"move": {"positionInicial": jsonpickle.encode(posInicial),
+                                 "positionFinal": jsonpickle.encode(posFinal)}}
+                status = self.realizarLance(
+                    positionInicial=posInicial, positionFinal=posFinal)
+
+                # self.tabuleiro.getPecaClicada().setOcupante(None)
+                self.tabuleiro.setPecaClicada(None)
+                self.server_proxy.send_move(self.match_id, payload=move)
+
         self.canvas.bind("<Button-1>", square_click)
         root.mainloop()
+
+    def montarPositcoes(self):
+
+        for position in self.tabuleiro.getPositions():
+            x1 = position.getColuna() * self.SQUARE_SIZE
+            y1 = position.getLinha() * self.SQUARE_SIZE
+            x2 = x1 + self.SQUARE_SIZE
+            y2 = y1 + self.SQUARE_SIZE
+
+            if position.getCasa() == CorCasa.PRETO:
+                retangulo = self.canvas.create_rectangle(
+                    x1, y1, x2, y2, fill="gray", tags=f"square-{position.getLinha()}-{position.getColuna()}")
+            else:  # Casa branca
+                retangulo = self.canvas.create_rectangle(
+                    x1, y1, x2, y2, fill="white", tags=f"square-{position.getLinha()}-{position.getColuna()}")
+            self.retangulos[(position.getLinha(),
+                             position.getColuna())] = retangulo
+            piece_size = self.SQUARE_SIZE // 2
+            if position.getOcupante() is not None:
+                if position.getOcupante().getCor() == CorPeca.VERMELHO:
+                    self.canvas.create_oval(position.getColuna() * self.SQUARE_SIZE + piece_size // 2,
+                                            position.getLinha() * self.SQUARE_SIZE + piece_size // 2,
+                                            position.getColuna() * self.SQUARE_SIZE + self.SQUARE_SIZE - piece_size // 2,
+                                            position.getLinha() * self.SQUARE_SIZE + self.SQUARE_SIZE - piece_size // 2,
+                                            fill="red", tags=f"square-{position.getLinha()}-{position.getColuna()}")
+                else:
+                    self.canvas.create_oval(position.getColuna() * self.SQUARE_SIZE + piece_size // 2,
+                                            position.getLinha() * self.SQUARE_SIZE + piece_size // 2,
+                                            position.getColuna() * self.SQUARE_SIZE + self.SQUARE_SIZE - piece_size // 2,
+                                            position.getLinha() * self.SQUARE_SIZE + self.SQUARE_SIZE - piece_size // 2,
+                                            fill="black", tags=f"square-{position.getLinha()}-{position.getColuna()}")
 
     def exibir_notificacao(self, message: str):
         messagebox.showinfo("Notificação de erro", message=message)
@@ -148,9 +163,24 @@ class ActorPlayer(PyNetgamesServerListener):
     def fechar_janela(self):
         self.tk.destroy()
 
-    # def realizarLance(self, row, ):
-    #     if not self.tabuleiro.get_proposta_empate():
-
+    def realizarLance(self, positionInicial: Position, positionFinal: Position):
+        if not self.tabuleiro.get_proposta_empate():
+            position = self.tabuleiro.getPositionByLinhaColuna(positionFinal.getLinha(), positionFinal.getColuna())
+            posInitial = self.tabuleiro.getPositionByLinhaColuna(positionInicial.getLinha(), positionInicial.getColuna())
+            # identifica se teve captura
+            if self.tabuleiro.getPecasCapturadas().__len__ != 0:
+                pass
+                # Verifica se a casa selecionada é uma ponta do tabuleiro
+            if (positionFinal.getLinha() == 0 and position.getOcupante().getCor() == CorPeca.VERMELHO) or (
+                    positionFinal.getLinha() == 7 and position.getOcupante().getCor() == CorPeca.PRETO):
+                position.getOcupante().setDama(True)
+                # Transforma peça em dama
+            position.setOcupante(positionInicial.getOcupante())
+            posInitial.setOcupante(None)
+            self.montarPositcoes()
+            self.tabuleiro.trocarTurnos()
+            # TODO: avaliar encerramento da partida
+            return 0
 
     def add_listener(self):
         self.server_proxy = PyNetgamesServerProxy()
@@ -180,9 +210,9 @@ class ActorPlayer(PyNetgamesServerListener):
         self.jogo_menu.entryconfig("Desistir", state="normal")
         self.jogo_menu.entryconfig("Oferecer empate", state="normal")
         self.partidaEmAndamento = True
+        self.match_id = message.match_id
         print("RECEBEU PARTIDA")
         initialPosition = message.position
-        # print(message.position)  position = 1 or position = 0 - position 1: comeca jogando, position 0: espera
         if initialPosition == 1:
             print('position 1')
             pecasLocal: list[Peca] = []
@@ -223,10 +253,9 @@ class ActorPlayer(PyNetgamesServerListener):
 
         # for peca in self.tabuleiro.jogadorLocal.pecas:
         #     # if position.ocupante is not None:
-        #     #     print(position.ocupante.cor)
-        #     print(peca.cor)
-        #     # else:
-        #     #     print("sem peca")
 
-    def receive_move(self, move):
-        pass
+    def receive_move(self, move: MoveMessage):
+        print(move.payload.get("move").get('positionInicial'))
+        positionInitial = jsonpickle.decode(move.payload.get("move").get("positionInicial"))
+        positionFinal = jsonpickle.decode(move.payload.get("move").get("positionFinal"))
+        self.realizarLance(positionInicial=positionInitial, positionFinal=positionFinal)
