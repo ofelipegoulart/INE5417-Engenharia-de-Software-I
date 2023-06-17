@@ -203,6 +203,9 @@ class ActorPlayer(PyNetgamesServerListener):
             posInitial.setOcupante(None)
             self.montarPositcoes()
             aguardandoJogada = self.tabuleiro.avaliarEncerramento()
+            print(self.tabuleiro.getStatus())
+            if self.tabuleiro.getStatus() == MatchStatus.EMPATE:
+                print("Empatou!!!!!!!!!!!!!!!")
             if (aguardandoJogada):
                 self.tabuleiro.trocarTurnos()
             return 0
