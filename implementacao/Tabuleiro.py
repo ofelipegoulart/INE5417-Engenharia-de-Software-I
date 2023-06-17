@@ -193,12 +193,61 @@ class Tabuleiro:
 
         return possiveis_casas
 
+    # def verificaCapturas(self, positionInicial: Position, positionFinal: Position, cor: CorPeca):
+    #     direcao = 1 if cor == CorPeca.PRETO else -1
+    #     linha_inicial = positionInicial.getLinha()
+    #     linha_final = positionFinal.getLinha()
+    #     coluna_inicial = positionInicial.getColuna()
+    #     coluna_final = positionFinal.getColuna()
+    #
+    #     if linha_final > linha_inicial and coluna_final > coluna_inicial:
+    #         # Movimento diagonal para a direita e para baixo
+    #         for i in range(linha_inicial + 1, linha_final):
+    #             j = coluna_inicial + (i - linha_inicial)
+    #             ocupante = self.getPositionByLinhaColuna(i, j).getOcupante()
+    #             if ocupante is not None and ocupante.getCor() != cor:
+    #                 self.pecasCapturadas.append(ocupante)
+    #                 self.zerarRodadasSemCaptura()
+    #                 return
+    #
+    #     elif linha_final > linha_inicial and coluna_final < coluna_inicial:
+    #         # Movimento diagonal para a esquerda e para baixo
+    #         for i in range(linha_inicial + 1, linha_final):
+    #             j = coluna_inicial - (i - linha_inicial)
+    #             ocupante = self.getPositionByLinhaColuna(i, j).getOcupante()
+    #             if ocupante is not None and ocupante.getCor() != cor:
+    #                 self.pecasCapturadas.append(ocupante)
+    #                 self.zerarRodadasSemCaptura()
+    #                 return
+    #
+    #     elif linha_final < linha_inicial and coluna_final > coluna_inicial:
+    #         # Movimento diagonal para a direita e para cima
+    #         for i in range(linha_inicial - 1, linha_final, -1):
+    #             j = coluna_inicial + (linha_inicial - i)
+    #             ocupante = self.getPositionByLinhaColuna(i, j).getOcupante()
+    #             if ocupante is not None and ocupante.getCor() != cor:
+    #                 self.pecasCapturadas.append(ocupante)
+    #                 self.zerarRodadasSemCaptura()
+    #                 return
+    #
+    #     elif linha_final < linha_inicial and coluna_final < coluna_inicial:
+    #         # Movimento diagonal para a esquerda e para cima
+    #         for i in range(linha_inicial - 1, linha_final, -1):
+    #             j = coluna_inicial - (linha_inicial - i)
+    #             ocupante = self.getPositionByLinhaColuna(i, j).getOcupante()
+    #             if ocupante is not None and ocupante.getCor() != cor:
+    #                 self.pecasCapturadas.append(ocupante)
+    #                 self.zerarRodadasSemCaptura()
+    #                 return
+    #     self.appendRodadasSemCaptura()
+
     def verificaCapturas(self, positionInicial: Position, positionFinal: Position, cor: CorPeca):
         direcao = 1 if cor == CorPeca.PRETO else -1
         linha_inicial = positionInicial.getLinha()
         linha_final = positionFinal.getLinha()
         coluna_inicial = positionInicial.getColuna()
         coluna_final = positionFinal.getColuna()
+        pecasCapturadasNaRodada: list[Peca] = []
 
         if linha_final > linha_inicial and coluna_final > coluna_inicial:
             # Movimento diagonal para a direita e para baixo
@@ -207,8 +256,8 @@ class Tabuleiro:
                 ocupante = self.getPositionByLinhaColuna(i, j).getOcupante()
                 if ocupante is not None and ocupante.getCor() != cor:
                     self.pecasCapturadas.append(ocupante)
-                    self.zerarRodadasSemCaptura()
-                    return
+                    pecasCapturadasNaRodada.append(ocupante)
+                    # self.zerarRodadasSemCaptura()
 
         elif linha_final > linha_inicial and coluna_final < coluna_inicial:
             # Movimento diagonal para a esquerda e para baixo
@@ -217,8 +266,8 @@ class Tabuleiro:
                 ocupante = self.getPositionByLinhaColuna(i, j).getOcupante()
                 if ocupante is not None and ocupante.getCor() != cor:
                     self.pecasCapturadas.append(ocupante)
-                    self.zerarRodadasSemCaptura()
-                    return
+                    pecasCapturadasNaRodada.append(ocupante)
+                    # self.zerarRodadasSemCaptura()
 
         elif linha_final < linha_inicial and coluna_final > coluna_inicial:
             # Movimento diagonal para a direita e para cima
@@ -227,8 +276,8 @@ class Tabuleiro:
                 ocupante = self.getPositionByLinhaColuna(i, j).getOcupante()
                 if ocupante is not None and ocupante.getCor() != cor:
                     self.pecasCapturadas.append(ocupante)
-                    self.zerarRodadasSemCaptura()
-                    return
+                    pecasCapturadasNaRodada.append(ocupante)
+                    # self.zerarRodadasSemCaptura()
 
         elif linha_final < linha_inicial and coluna_final < coluna_inicial:
             # Movimento diagonal para a esquerda e para cima
@@ -237,9 +286,13 @@ class Tabuleiro:
                 ocupante = self.getPositionByLinhaColuna(i, j).getOcupante()
                 if ocupante is not None and ocupante.getCor() != cor:
                     self.pecasCapturadas.append(ocupante)
-                    self.zerarRodadasSemCaptura()
-                    return
-        self.appendRodadasSemCaptura()
+                    pecasCapturadasNaRodada.append(ocupante)
+                    # self.zerarRodadasSemCaptura()
+        if len(pecasCapturadasNaRodada) != 0:
+            self.zerarRodadasSemCaptura()
+        else:
+            self.appendRodadasSemCaptura()
+
 
     def getPositionByLinhaColuna(self, linha: int, coluna: int) -> Position:
         for position in self.positions:
@@ -280,30 +333,37 @@ class Tabuleiro:
             if not jogador.daVez:
                 if len(self.getPositionsWithPiecesOfPlayer(jogador)) == 0:
                     self.setStatus(MatchStatus.VENCEDOR)
+                    jogador.setVencedor(False)
+                    print("retornando aqui >> vencedor")
                     return True
                 else:
                     pecasBloqueadas: list[Peca] = []
+                    # Rever esse algoritimo
                     for position in self.getPositionsWithPiecesOfPlayer(jogador):
                         if self.pecaBloqueada(position=position):
                             pecasBloqueadas.append(position.getOcupante())
                     if len(pecasBloqueadas) == len(self.getPlayerPieces(jogador)):
                         self.setStatus(MatchStatus.VENCEDOR)
+                        print("retornando aqui >> pecasBloqueadas")
                         return True
                     else:
-                        if len(self.lances) >= 20:
+                        if len(self.lances) >= 5:
                             lancesDama: list[Lance] = []
                             for lance in self.getLances():
                                 if lance.getPeca().getDama():
                                     lancesDama.append(lance)
                             if len(lancesDama) == 20:
                                 self.setStatus(MatchStatus.EMPATE)
+                                print("retornando aqui >> lancesDamas")
                                 return True
                             else:
                                 empate = self.verificarEmpate()
                                 if (empate):
                                     self.setStatus(MatchStatus.EMPATE)
+                                    print("retornando aqui >> empate")
                                     return True
                                 else:
+                                    print("retornando aqui >> finalElse")
                                     return False
 
     def verificarEmpate(self):
@@ -311,7 +371,7 @@ class Tabuleiro:
         for lance in self.lances:
             if not lance.getCaptura():
                 lancesSemCaptura.append(lance)
-        if len(lancesSemCaptura) == 5:
+        if len(lancesSemCaptura) == 20:
             pecasLocal: list[Peca] = self.getPlayerPieces(self.jogadorLocal)
             pecasRemoto: list[Peca] = self.getPlayerPieces(self.jogadorRemoto)
             if len(pecasLocal) == 2 and len(pecasRemoto) == 2:
@@ -405,7 +465,8 @@ class Tabuleiro:
     def getPositionsWithPiecesOfPlayer(self, jogador: Jogador) -> list[Position]:
         finalList: list[Position] = []
         for position in self.getPositions():
-            if position.getOcupante() == jogador:
+            if position.getOcupante() is not None and\
+                    position.getOcupante().getJogador().getIdJogador() == jogador.getIdJogador():
                 finalList.append(position)
         return finalList
 

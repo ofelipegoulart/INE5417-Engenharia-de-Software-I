@@ -88,7 +88,7 @@ class ActorPlayer(PyNetgamesServerListener):
 
         def square_click(event):
             if not self.partidaEmAndamento:
-                return
+                self.exibir_notificacao("Partida não iniciada")
             item_id = event.widget.find_closest(event.x, event.y)[0]
             # current_color = self.canvas.itemcget(item_id, "fill")
             # if current_color == "yellow":
@@ -123,63 +123,83 @@ class ActorPlayer(PyNetgamesServerListener):
                     positionInicial=posInicial, positionFinal=posFinal)
 
                 # self.tabuleiro.getPecaClicada().setOcupante(None)
+
                 self.tabuleiro.setPecaClicada(None)
                 self.server_proxy.send_move(self.match_id, payload=move)
+                # if status ==
 
         self.canvas.bind("<Button-1>", square_click)
         root.mainloop()
 
     def montarPositcoes(self):
+        if self.tabuleiro.match_status == MatchStatus.EMPATE:
+            self.canvas.delete("all")  # Limpa todos os elementos do Canvas
+            self.canvas.config(bg="white")  # Define o fundo como branco
+            self.canvas.create_text(200, 200, text="Partida empatada! Reinicie a aplicação")  # Cria um texto centralizado
+            self.canvas.bind("<Button-1>", self.fechar_janela)
+        elif self.tabuleiro.match_status == MatchStatus.VENCEDOR:
+            playerVencedor = self.tabuleiro.jogadorLocal if self.tabuleiro.jogadorRemoto.getVencedor() is False \
+                else self.tabuleiro.jogadorRemoto
+            texto_vencedor_player = "Local " if playerVencedor == self.tabuleiro.jogadorLocal else "Remoto "
+            texto_vencedor = "venceu! reinicie a aplicação"
+            self.canvas.delete("all")  # Limpa todos os elementos do Canvas
+            self.canvas.config(bg="white")  # Define o fundo como branco
+            self.canvas.create_text(200, 200,
+                                    text=texto_vencedor_player + texto_vencedor)  # Cria um texto centralizado
+            self.canvas.bind("<Button-1>", self.fechar_janela)
+            # for jogador in self.tabuleiro.getPlayers():
+            #     if jogador.getVencedor() != False
 
-        for position in self.tabuleiro.getPositions():
-            x1 = position.getColuna() * self.SQUARE_SIZE
-            y1 = position.getLinha() * self.SQUARE_SIZE
-            x2 = x1 + self.SQUARE_SIZE
-            y2 = y1 + self.SQUARE_SIZE
+        else:
+            for position in self.tabuleiro.getPositions():
+                x1 = position.getColuna() * self.SQUARE_SIZE
+                y1 = position.getLinha() * self.SQUARE_SIZE
+                x2 = x1 + self.SQUARE_SIZE
+                y2 = y1 + self.SQUARE_SIZE
 
-            if position.getCasa() == CorCasa.PRETO:
-                retangulo = self.canvas.create_rectangle(
-                    x1, y1, x2, y2, fill="gray", tags=f"square-{position.getLinha()}-{position.getColuna()}")
-            else:  # Casa branca
-                retangulo = self.canvas.create_rectangle(
-                    x1, y1, x2, y2, fill="white", tags=f"square-{position.getLinha()}-{position.getColuna()}")
-            self.retangulos[(position.getLinha(),
-                             position.getColuna())] = retangulo
-            piece_size = self.SQUARE_SIZE // 2
-            if position.getOcupante() is not None:
-                if position.getOcupante().getCor() == CorPeca.VERMELHO:
-                    if position.getOcupante().getDama():
-                        self.canvas.create_oval(position.getColuna() * self.SQUARE_SIZE + piece_size // 2,
-                                                position.getLinha() * self.SQUARE_SIZE + piece_size // 2,
-                                                position.getColuna() * self.SQUARE_SIZE + self.SQUARE_SIZE - piece_size // 2,
-                                                position.getLinha() * self.SQUARE_SIZE + self.SQUARE_SIZE - piece_size // 2,
-                                                fill="orange", tags=f"square-{position.getLinha()}-{position.getColuna()}")
+                if position.getCasa() == CorCasa.PRETO:
+                    retangulo = self.canvas.create_rectangle(
+                        x1, y1, x2, y2, fill="gray", tags=f"square-{position.getLinha()}-{position.getColuna()}")
+                else:  # Casa branca
+                    retangulo = self.canvas.create_rectangle(
+                        x1, y1, x2, y2, fill="white", tags=f"square-{position.getLinha()}-{position.getColuna()}")
+                self.retangulos[(position.getLinha(),
+                                 position.getColuna())] = retangulo
+                piece_size = self.SQUARE_SIZE // 2
+                if position.getOcupante() is not None:
+                    if position.getOcupante().getCor() == CorPeca.VERMELHO:
+                        if position.getOcupante().getDama():
+                            self.canvas.create_oval(position.getColuna() * self.SQUARE_SIZE + piece_size // 2,
+                                                    position.getLinha() * self.SQUARE_SIZE + piece_size // 2,
+                                                    position.getColuna() * self.SQUARE_SIZE + self.SQUARE_SIZE - piece_size // 2,
+                                                    position.getLinha() * self.SQUARE_SIZE + self.SQUARE_SIZE - piece_size // 2,
+                                                    fill="orange", tags=f"square-{position.getLinha()}-{position.getColuna()}")
+                        else:
+
+                            self.canvas.create_oval(position.getColuna() * self.SQUARE_SIZE + piece_size // 2,
+                                                    position.getLinha() * self.SQUARE_SIZE + piece_size // 2,
+                                                    position.getColuna() * self.SQUARE_SIZE + self.SQUARE_SIZE - piece_size // 2,
+                                                    position.getLinha() * self.SQUARE_SIZE + self.SQUARE_SIZE - piece_size // 2,
+                                                    fill="red", tags=f"square-{position.getLinha()}-{position.getColuna()}")
+
                     else:
-
-                        self.canvas.create_oval(position.getColuna() * self.SQUARE_SIZE + piece_size // 2,
-                                                position.getLinha() * self.SQUARE_SIZE + piece_size // 2,
-                                                position.getColuna() * self.SQUARE_SIZE + self.SQUARE_SIZE - piece_size // 2,
-                                                position.getLinha() * self.SQUARE_SIZE + self.SQUARE_SIZE - piece_size // 2,
-                                                fill="red", tags=f"square-{position.getLinha()}-{position.getColuna()}")
-
-                else:
-                    if position.getOcupante().getDama():
-                        self.canvas.create_oval(position.getColuna() * self.SQUARE_SIZE + piece_size // 2,
-                                                position.getLinha() * self.SQUARE_SIZE + piece_size // 2,
-                                                position.getColuna() * self.SQUARE_SIZE + self.SQUARE_SIZE - piece_size // 2,
-                                                position.getLinha() * self.SQUARE_SIZE + self.SQUARE_SIZE - piece_size // 2,
-                                                fill="blue", tags=f"square-{position.getLinha()}-{position.getColuna()}")
-                    else:
-                        self.canvas.create_oval(position.getColuna() * self.SQUARE_SIZE + piece_size // 2,
-                                                position.getLinha() * self.SQUARE_SIZE + piece_size // 2,
-                                                position.getColuna() * self.SQUARE_SIZE + self.SQUARE_SIZE - piece_size // 2,
-                                                position.getLinha() * self.SQUARE_SIZE + self.SQUARE_SIZE - piece_size // 2,
-                                                fill="black", tags=f"square-{position.getLinha()}-{position.getColuna()}")
+                        if position.getOcupante().getDama():
+                            self.canvas.create_oval(position.getColuna() * self.SQUARE_SIZE + piece_size // 2,
+                                                    position.getLinha() * self.SQUARE_SIZE + piece_size // 2,
+                                                    position.getColuna() * self.SQUARE_SIZE + self.SQUARE_SIZE - piece_size // 2,
+                                                    position.getLinha() * self.SQUARE_SIZE + self.SQUARE_SIZE - piece_size // 2,
+                                                    fill="blue", tags=f"square-{position.getLinha()}-{position.getColuna()}")
+                        else:
+                            self.canvas.create_oval(position.getColuna() * self.SQUARE_SIZE + piece_size // 2,
+                                                    position.getLinha() * self.SQUARE_SIZE + piece_size // 2,
+                                                    position.getColuna() * self.SQUARE_SIZE + self.SQUARE_SIZE - piece_size // 2,
+                                                    position.getLinha() * self.SQUARE_SIZE + self.SQUARE_SIZE - piece_size // 2,
+                                                    fill="black", tags=f"square-{position.getLinha()}-{position.getColuna()}")
 
     def exibir_notificacao(self, message: str):
         messagebox.showinfo("Notificação de erro", message=message)
 
-    def fechar_janela(self):
+    def fechar_janela(self, event):
         self.tk.destroy()
 
     def realizarLance(self, positionInicial: Position, positionFinal: Position):
@@ -201,14 +221,12 @@ class ActorPlayer(PyNetgamesServerListener):
             self.tabuleiro.verificaCapturas(positionInicial, positionFinal, positionInicial.getOcupante().getCor())
             self.tabuleiro.removerPecas()
             posInitial.setOcupante(None)
-            self.montarPositcoes()
-            aguardandoJogada = self.tabuleiro.avaliarEncerramento()
-            print(self.tabuleiro.getStatus())
-            if self.tabuleiro.getStatus() == MatchStatus.EMPATE:
-                print("Empatou!!!!!!!!!!!!!!!")
-            if (aguardandoJogada):
+            partidaEncerrada = self.tabuleiro.avaliarEncerramento()
+            print(self.tabuleiro.rodadasSemCaptura)
+            if not partidaEncerrada:
                 self.tabuleiro.trocarTurnos()
-            return 0
+            self.montarPositcoes()
+            return self.tabuleiro.match_status
 
     def add_listener(self):
         self.server_proxy = PyNetgamesServerProxy()
@@ -256,8 +274,10 @@ class ActorPlayer(PyNetgamesServerListener):
                         pecasRemoto.append(peca)
             self.tabuleiro.jogadorLocal.pecas = pecasLocal
             self.tabuleiro.jogadorLocal.daVez = True
+            self.tabuleiro.jogadorLocal.setIdJogador(initialPosition == 1)
             self.tabuleiro.jogadorRemoto.pecas = pecasRemoto
             self.tabuleiro.jogadorRemoto.daVez = False
+            self.tabuleiro.jogadorRemoto.setIdJogador(initialPosition == 0)
         elif initialPosition == 0:
             print('position 0')
             pecasRemoto: list[Peca] = []
@@ -273,8 +293,10 @@ class ActorPlayer(PyNetgamesServerListener):
                         pecasLocal.append(peca)
             self.tabuleiro.jogadorLocal.pecas = pecasLocal
             self.tabuleiro.jogadorLocal.daVez = False
+            self.tabuleiro.jogadorLocal.setIdJogador(initialPosition == 0)
             self.tabuleiro.jogadorRemoto.pecas = pecasRemoto
             self.tabuleiro.jogadorRemoto.daVez = True
+            self.tabuleiro.jogadorRemoto.setIdJogador(initialPosition == 1)
 
         # for jogador in self.tabuleiro.getPlayers():
         #     if jogador.daVez == False:

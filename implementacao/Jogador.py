@@ -11,6 +11,7 @@ class Jogador(object):
         self.vencedor: bool = None
         self.damas: int = 0
         self.pecasNorm: int = 12
+        self.idJogador: int = None
 
     def getNome(self) -> str:
         return self.nome
@@ -38,3 +39,9 @@ class Jogador(object):
 
     def getNormalPieces(self) -> int:
         pass
+
+    def setIdJogador(self, idJogador):
+        self.idJogador = idJogador
+
+    def getIdJogador(self):
+        return self.idJogador
