@@ -103,6 +103,7 @@ class ActorPlayer(PyNetgamesServerListener):
             temJogada = self.tabuleiro.click(
                 linha=row, coluna=col, local_turn=self.tabuleiro.jogadorLocal.daVez)
             if not temJogada and self.tabuleiro.pecaClicada is None:
+                self.montarPositcoes()
                 self.exibir_notificacao(self.tabuleiro.errorLocalMessage)
             elif not temJogada and self.tabuleiro.pecaClicada is not None:
                 for jogada in self.tabuleiro.getJogadas():
@@ -192,11 +193,12 @@ class ActorPlayer(PyNetgamesServerListener):
             if self.tabuleiro.getPecasCapturadas().__len__ != 0:
                 pass
                 # Verifica se a casa selecionada é uma ponta do tabuleiro
-            if (positionFinal.getLinha() == 0 and position.getOcupante().getCor() == CorPeca.VERMELHO) or (
-                    positionFinal.getLinha() == 7 and position.getOcupante().getCor() == CorPeca.PRETO):
-                position.getOcupante().setDama(True)
+            if (positionFinal.getLinha() == 0 and posInitial.getOcupante().getCor() == CorPeca.VERMELHO) or (
+                    positionFinal.getLinha() == 7 and posInitial.getOcupante().getCor() == CorPeca.PRETO):
+                posInitial.getOcupante().setDama(True)
                 # Transforma peça em dama
             position.setOcupante(positionInicial.getOcupante())
+            self.tabuleiro.verificaCapturas(positionInicial, positionFinal, positionInicial.getOcupante().getCor())
             self.tabuleiro.removerPecas()
             posInitial.setOcupante(None)
             self.montarPositcoes()

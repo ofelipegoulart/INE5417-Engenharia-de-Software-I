@@ -75,15 +75,15 @@ class Tabuleiro:
             return possiveis_casas
 
         peca = position.ocupante
-        linha = position.getLinha()
-        coluna = position.getColuna()
+        linha = position.linha
+        coluna = position.coluna
 
-        if peca.getDama():
+        if peca.dama:
             possiveis_casas += self.verificarMovimentosDama(position)
         else:
             possiveis_casas += self.verificarMovimentosPeao(position)
-        for casa in possiveis_casas:
-            return possiveis_casas
+
+        return possiveis_casas
 
     def verificarMovimentosPeao(self, position: Position):
         possiveis_casas = []
@@ -107,13 +107,11 @@ class Tabuleiro:
 
         if 0 <= nova_linha <= 7 and 0 <= nova_coluna_esquerda <= 7:
             if self.getPositionByLinhaColuna(nova_linha, nova_coluna_esquerda).ocupante is None:
-                possiveis_casas.append(self.getPositionByLinhaColuna(
-                    nova_linha, nova_coluna_esquerda))
+                possiveis_casas.append(self.getPositionByLinhaColuna(nova_linha, nova_coluna_esquerda))
 
         if 0 <= nova_linha <= 7 and 0 <= nova_coluna_direita <= 7:
             if self.getPositionByLinhaColuna(nova_linha, nova_coluna_direita).ocupante is None:
-                possiveis_casas.append(self.getPositionByLinhaColuna(
-                    nova_linha, nova_coluna_direita))
+                possiveis_casas.append(self.getPositionByLinhaColuna(nova_linha, nova_coluna_direita))
 
         # Verifica movimento para captura
         nova_linha = linha + (direcao * 2)
@@ -124,61 +122,40 @@ class Tabuleiro:
             capturou = False
 
             if 0 <= nova_linha <= 7 and 0 <= nova_coluna_esquerda <= 7:
-                peca_inimiga = self.getPositionByLinhaColuna(
-                    linha + direcao, coluna - 1).ocupante
-                peca_vazia = self.getPositionByLinhaColuna(
-                    nova_linha, nova_coluna_esquerda).ocupante
+                peca_inimiga = self.getPositionByLinhaColuna(linha + direcao, coluna - 1).ocupante
+                peca_vazia = self.getPositionByLinhaColuna(nova_linha, nova_coluna_esquerda).ocupante
 
                 if peca_inimiga is not None and peca_vazia is None and peca_inimiga.getCor() != cor:
-                    self.pecasCapturadas.append(peca_inimiga)
-                    proxima_casa = self.getPositionByLinhaColuna(
-                        nova_linha, nova_coluna_esquerda)
+                    # self.pecasCapturadas.append(peca_inimiga)
+                    proxima_casa = self.getPositionByLinhaColuna(nova_linha, nova_coluna_esquerda)
                     possiveis_casas.append(proxima_casa)
                     capturou = True
 
                     # Verifica capturas múltiplas na diagonal esquerda
                     proxima_linha = nova_linha + direcao
                     proxima_coluna = nova_coluna_esquerda - 1
-                    proxima_casa = self.getPositionByLinhaColuna(
-                        proxima_linha, proxima_coluna)
-
-                    while proxima_casa is not None and proxima_casa.ocupante is None:
-                        possiveis_casas.append(proxima_casa)
-                        proxima_linha += direcao
-                        proxima_coluna -= 1
-                        proxima_casa = self.getPositionByLinhaColuna(
-                            proxima_linha, proxima_coluna)
-                    if capturou:
-                        self.pecasCapturadas.append(peca_inimiga)
-                # self.pecasCapturadas.append(peca_inimiga)
+                    proxima_casa = self.getPositionByLinhaColuna(proxima_linha, proxima_coluna)
+                    # if proxima_casa.getOcupante() is not None and proxima_casa.getOcupante().getCor() != cor and \
+                    #         self.pecaIsCapturable(position, proxima_casa, direcao=direcao):
+                    #     self.pecasCapturadas.append(peca_inimiga)
 
             if 0 <= nova_linha <= 7 and 0 <= nova_coluna_direita <= 7:
-                peca_inimiga = self.getPositionByLinhaColuna(
-                    linha + direcao, coluna + 1).ocupante
-                peca_vazia = self.getPositionByLinhaColuna(
-                    nova_linha, nova_coluna_direita).ocupante
+                peca_inimiga = self.getPositionByLinhaColuna(linha + direcao, coluna + 1).ocupante
+                peca_vazia = self.getPositionByLinhaColuna(nova_linha, nova_coluna_direita).ocupante
 
                 if peca_inimiga is not None and peca_vazia is None and peca_inimiga.getCor() != cor:
-                    self.pecasCapturadas.append(peca_inimiga)
-                    proxima_casa = self.getPositionByLinhaColuna(
-                        nova_linha, nova_coluna_direita)
+                    # self.pecasCapturadas.append(peca_inimiga)
+                    proxima_casa = self.getPositionByLinhaColuna(nova_linha, nova_coluna_direita)
                     possiveis_casas.append(proxima_casa)
                     capturou = True
 
                     # Verifica capturas múltiplas na diagonal direita
                     proxima_linha = nova_linha + direcao
                     proxima_coluna = nova_coluna_direita + 1
-                    proxima_casa = self.getPositionByLinhaColuna(
-                        proxima_linha, proxima_coluna)
-
-                    while proxima_casa is not None and proxima_casa.ocupante is None:
-                        possiveis_casas.append(proxima_casa)
-                        proxima_linha += direcao
-                        proxima_coluna += 1
-                        proxima_casa = self.getPositionByLinhaColuna(
-                            proxima_linha, proxima_coluna)
-                if capturou:
-                    self.pecasCapturadas.append(peca_inimiga)
+                    proxima_casa = self.getPositionByLinhaColuna(proxima_linha, proxima_coluna)
+                    # if proxima_casa.getOcupante() is not None and proxima_casa.getOcupante().getCor() != cor and \
+                    #         self.pecaIsCapturable(position, proxima_casa, direcao=direcao):
+                    #     self.pecasCapturadas.append(peca_inimiga)
 
             if not capturou:
                 break
@@ -189,11 +166,12 @@ class Tabuleiro:
 
         return possiveis_casas
 
+
     def verificarMovimentosDama(self, position: Position):
         possiveis_casas = []
         peca = position.ocupante
-        linha = position.getLinha()
-        coluna = position.getColuna()
+        linha = position.linha
+        coluna = position.coluna
         cor = peca.getCor()
 
         # Verifica movimentos nas quatro direções (diagonais)
@@ -205,16 +183,15 @@ class Tabuleiro:
             nova_coluna = coluna + delta_coluna
 
             while 0 <= nova_linha <= 7 and 0 <= nova_coluna <= 7:
-                nova_posicao = self.getPositionByLinhaColuna(
-                    nova_linha, nova_coluna)
+                nova_posicao = self.getPositionByLinhaColuna(nova_linha, nova_coluna)
 
                 if nova_posicao.ocupante is None:
                     possiveis_casas.append(nova_posicao)
                 else:
                     if nova_posicao.ocupante.getCor() != cor:
                         if 0 <= nova_linha + delta_linha <= 7 and 0 <= nova_coluna + delta_coluna <= 7:
-                            proxima_posicao = self.getPositionByLinhaColuna(
-                                nova_linha + delta_linha, nova_coluna + delta_coluna)
+                            proxima_posicao = self.getPositionByLinhaColuna(nova_linha + delta_linha,
+                                                                            nova_coluna + delta_coluna)
                             if proxima_posicao.ocupante is None:
                                 possiveis_casas.append(proxima_posicao)
 
@@ -222,6 +199,54 @@ class Tabuleiro:
                 nova_coluna += delta_coluna
 
         return possiveis_casas
+
+    def pecaIsCapturable(self, posicaoPlayer: Position, posicaoAdversario: Position, direcao):
+        # Verifica se esta na diagonal esquerda
+        if posicaoPlayer.getColuna() == posicaoAdversario.getColuna() + direcao and posicaoPlayer.getLinha() == posicaoAdversario.getLinha() + direcao:
+            if self.getPositionByLinhaColuna(posicaoAdversario.getLinha() + (direcao * 2),
+                                             posicaoAdversario.getColuna() + (direcao * 2)).getOcupante() is not None:
+                return True
+        else:
+            return False
+
+    def verificaCapturas(self, positionInicial: Position, positionFinal: Position, cor: CorPeca):
+        direcao = 1 if cor == CorPeca.PRETO else -1
+        linha_inicial = positionInicial.getLinha()
+        linha_final = positionFinal.getLinha()
+        coluna_inicial = positionInicial.getColuna()
+        coluna_final = positionFinal.getColuna()
+
+        if linha_final > linha_inicial and coluna_final > coluna_inicial:
+            # Movimento diagonal para a direita e para baixo
+            for i in range(linha_inicial + 1, linha_final):
+                j = coluna_inicial + (i - linha_inicial)
+                ocupante = self.getPositionByLinhaColuna(i, j).getOcupante()
+                if ocupante is not None and ocupante.getCor() != cor:
+                    self.pecasCapturadas.append(ocupante)
+
+        elif linha_final > linha_inicial and coluna_final < coluna_inicial:
+            # Movimento diagonal para a esquerda e para baixo
+            for i in range(linha_inicial + 1, linha_final):
+                j = coluna_inicial - (i - linha_inicial)
+                ocupante = self.getPositionByLinhaColuna(i, j).getOcupante()
+                if ocupante is not None and ocupante.getCor() != cor:
+                    self.pecasCapturadas.append(ocupante)
+
+        elif linha_final < linha_inicial and coluna_final > coluna_inicial:
+            # Movimento diagonal para a direita e para cima
+            for i in range(linha_inicial - 1, linha_final, -1):
+                j = coluna_inicial + (linha_inicial - i)
+                ocupante = self.getPositionByLinhaColuna(i, j).getOcupante()
+                if ocupante is not None and ocupante.getCor() != cor:
+                    self.pecasCapturadas.append(ocupante)
+
+        elif linha_final < linha_inicial and coluna_final < coluna_inicial:
+            # Movimento diagonal para a esquerda e para cima
+            for i in range(linha_inicial - 1, linha_final, -1):
+                j = coluna_inicial - (linha_inicial - i)
+                ocupante = self.getPositionByLinhaColuna(i, j).getOcupante()
+                if ocupante is not None and ocupante.getCor() != cor:
+                    self.pecasCapturadas.append(ocupante)
 
     def getPositionByLinhaColuna(self, linha: int, coluna: int) -> Position:
         for position in self.positions:
@@ -241,7 +266,7 @@ class Tabuleiro:
                 return False
 
     def pecaBloqueada(self, position: Position) -> bool:
-        #TODO: precisa fazer esse método funcionar
+        # TODO: precisa fazer esse método funcionar
 
         # linha = position.getLinha()
         # coluna = position.getColuna()
