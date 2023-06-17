@@ -9,11 +9,12 @@ from implementacao.Position import Position
 
 
 class Peca(object):
-    def __init__(self, cor: CorPeca):
+    def __init__(self, cor: CorPeca, pecaId: str):
         self.cor: CorPeca = cor
         self.dama: bool = False
         # self.casa: Position = position
         self.jogador: Jogador = None
+        self.pecaId: str = pecaId
 
     def getCor(self) -> CorPeca:
         return self.cor
@@ -32,3 +33,6 @@ class Peca(object):
 
     def setJogador(self, jogador: Jogador):
         self.jogador = jogador
+
+    def getId(self):
+        return self.pecaId
