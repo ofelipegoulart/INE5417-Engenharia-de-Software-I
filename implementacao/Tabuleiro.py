@@ -6,6 +6,7 @@ from implementacao.Logica_do_Jogo.DamasInterface import DamasInterface
 from implementacao.MatchStatus import MatchStatus
 from implementacao.Peca import Peca
 from implementacao.Position import Position
+from implementacao.StatusPropostaEmpate import StatusPropostaEmpate
 
 
 class Tabuleiro:
@@ -24,8 +25,10 @@ class Tabuleiro:
         self.errorLocalMessage = None
         self.pecasCapturadas: list[Peca] = []
         self.lances: list[Lance] = []
+        self.perdedor: Jogador = None
+        self.statusPropostaEmpate: StatusPropostaEmpate = StatusPropostaEmpate.SEM_PROPOSTA
 
-    def click(self, linha: int, coluna: int, local_turn: bool) -> bool:
+    def click(self, linha: int, coluna: int, local_turn: bool, aceitaPropostaEmpate: bool or None) -> bool:
         state = self.getEstado()
         proposta_empate = self.get_proposta_empate()
 
@@ -64,9 +67,17 @@ class Tabuleiro:
                 elif not local_turn:
                     self.errorLocalMessage = "Não é seu turno"
                     return False
-
-            elif linha is None and coluna is None:
-                return False
+            elif coluna is None and linha is None:
+                self.set_proposta_empate(True)
+                self.statusPropostaEmpate = StatusPropostaEmpate.LOCAL_ENVIOU
+                return True
+        elif self.get_proposta_empate():
+            if aceitaPropostaEmpate:
+                self.statusPropostaEmpate = StatusPropostaEmpate.LOCAL_ACEITOU
+                return True
+            elif not aceitaPropostaEmpate:
+                self.statusPropostaEmpate = StatusPropostaEmpate.SEM_PROPOSTA
+                return True
 
     def verificarPossiveisCasas(self, position: Position):
         possiveis_casas = []
@@ -193,54 +204,6 @@ class Tabuleiro:
 
         return possiveis_casas
 
-    # def verificaCapturas(self, positionInicial: Position, positionFinal: Position, cor: CorPeca):
-    #     direcao = 1 if cor == CorPeca.PRETO else -1
-    #     linha_inicial = positionInicial.getLinha()
-    #     linha_final = positionFinal.getLinha()
-    #     coluna_inicial = positionInicial.getColuna()
-    #     coluna_final = positionFinal.getColuna()
-    #
-    #     if linha_final > linha_inicial and coluna_final > coluna_inicial:
-    #         # Movimento diagonal para a direita e para baixo
-    #         for i in range(linha_inicial + 1, linha_final):
-    #             j = coluna_inicial + (i - linha_inicial)
-    #             ocupante = self.getPositionByLinhaColuna(i, j).getOcupante()
-    #             if ocupante is not None and ocupante.getCor() != cor:
-    #                 self.pecasCapturadas.append(ocupante)
-    #                 self.zerarRodadasSemCaptura()
-    #                 return
-    #
-    #     elif linha_final > linha_inicial and coluna_final < coluna_inicial:
-    #         # Movimento diagonal para a esquerda e para baixo
-    #         for i in range(linha_inicial + 1, linha_final):
-    #             j = coluna_inicial - (i - linha_inicial)
-    #             ocupante = self.getPositionByLinhaColuna(i, j).getOcupante()
-    #             if ocupante is not None and ocupante.getCor() != cor:
-    #                 self.pecasCapturadas.append(ocupante)
-    #                 self.zerarRodadasSemCaptura()
-    #                 return
-    #
-    #     elif linha_final < linha_inicial and coluna_final > coluna_inicial:
-    #         # Movimento diagonal para a direita e para cima
-    #         for i in range(linha_inicial - 1, linha_final, -1):
-    #             j = coluna_inicial + (linha_inicial - i)
-    #             ocupante = self.getPositionByLinhaColuna(i, j).getOcupante()
-    #             if ocupante is not None and ocupante.getCor() != cor:
-    #                 self.pecasCapturadas.append(ocupante)
-    #                 self.zerarRodadasSemCaptura()
-    #                 return
-    #
-    #     elif linha_final < linha_inicial and coluna_final < coluna_inicial:
-    #         # Movimento diagonal para a esquerda e para cima
-    #         for i in range(linha_inicial - 1, linha_final, -1):
-    #             j = coluna_inicial - (linha_inicial - i)
-    #             ocupante = self.getPositionByLinhaColuna(i, j).getOcupante()
-    #             if ocupante is not None and ocupante.getCor() != cor:
-    #                 self.pecasCapturadas.append(ocupante)
-    #                 self.zerarRodadasSemCaptura()
-    #                 return
-    #     self.appendRodadasSemCaptura()
-
     def verificaCapturas(self, positionInicial: Position, positionFinal: Position, cor: CorPeca):
         direcao = 1 if cor == CorPeca.PRETO else -1
         linha_inicial = positionInicial.getLinha()
@@ -336,7 +299,7 @@ class Tabuleiro:
             if not jogador.daVez:
                 if len(self.getPositionsWithPiecesOfPlayer(jogador)) == 0:
                     self.setStatus(MatchStatus.VENCEDOR)
-                    jogador.setVencedor(False)
+                    self.perdedor = jogador
                     print("retornando aqui >> vencedor")
                     return True
                 else:
