@@ -118,11 +118,13 @@ class Tabuleiro:
 
         if 0 <= nova_linha_casa_vazia <= 7 and 0 <= nova_coluna_esquerda_casa_vazia <= 7:
             if self.getPositionByLinhaColuna(nova_linha_casa_vazia, nova_coluna_esquerda_casa_vazia).ocupante is None:
-                possiveis_casas.append(self.getPositionByLinhaColuna(nova_linha_casa_vazia, nova_coluna_esquerda_casa_vazia))
+                possiveis_casas.append(
+                    self.getPositionByLinhaColuna(nova_linha_casa_vazia, nova_coluna_esquerda_casa_vazia))
 
         if 0 <= nova_linha_casa_vazia <= 7 and 0 <= nova_coluna_direita_casa_vazia <= 7:
             if self.getPositionByLinhaColuna(nova_linha_casa_vazia, nova_coluna_direita_casa_vazia).ocupante is None:
-                possiveis_casas.append(self.getPositionByLinhaColuna(nova_linha_casa_vazia, nova_coluna_direita_casa_vazia))
+                possiveis_casas.append(
+                    self.getPositionByLinhaColuna(nova_linha_casa_vazia, nova_coluna_direita_casa_vazia))
 
         # Verifica movimento para captura
         nova_linha_casa_vazia = linha + (direcao * 2)
@@ -140,7 +142,8 @@ class Tabuleiro:
                 # Verifica se há uma peça inimiga na diagonal esquerda
                 peca_inimiga = self.getPositionByLinhaColuna(linha_peca_alvo, coluna_esquerda_peca_alvo).ocupante
                 # Verifica se a casa atras da peça inimiga está vazia
-                casa_vazia = self.getPositionByLinhaColuna(nova_linha_casa_vazia, nova_coluna_esquerda_casa_vazia).ocupante
+                casa_vazia = self.getPositionByLinhaColuna(nova_linha_casa_vazia,
+                                                           nova_coluna_esquerda_casa_vazia).ocupante
 
                 # Se há peça inimiga na diagonal esquerda e a peça atras
                 if peca_inimiga is not None and casa_vazia is None and peca_inimiga.getCor() != cor:
@@ -151,7 +154,8 @@ class Tabuleiro:
 
             if 0 <= nova_linha_casa_vazia <= 7 and 0 <= nova_coluna_direita_casa_vazia <= 7:
                 peca_inimiga = self.getPositionByLinhaColuna(linha_peca_alvo, coluna_direita_peca_alvo).ocupante
-                casa_vazia = self.getPositionByLinhaColuna(nova_linha_casa_vazia, nova_coluna_direita_casa_vazia).ocupante
+                casa_vazia = self.getPositionByLinhaColuna(nova_linha_casa_vazia,
+                                                           nova_coluna_direita_casa_vazia).ocupante
 
                 if peca_inimiga is not None and casa_vazia is None and peca_inimiga.getCor() != cor:
                     # self.pecasCapturadas.append(peca_inimiga)
@@ -174,8 +178,8 @@ class Tabuleiro:
     def verificarMovimentosDama(self, position: Position):
         possiveis_casas = []
         peca = position.ocupante
-        linha = position.linha
-        coluna = position.coluna
+        linha = position.getLinha()
+        coluna = position.getColuna()
         cor = peca.getCor()
 
         # Verifica movimentos nas quatro direções (diagonais)
@@ -193,11 +197,28 @@ class Tabuleiro:
                     possiveis_casas.append(nova_posicao)
                 else:
                     if nova_posicao.ocupante.getCor() != cor:
-                        if 0 <= nova_linha + delta_linha <= 7 and 0 <= nova_coluna + delta_coluna <= 7:
-                            proxima_posicao = self.getPositionByLinhaColuna(nova_linha + delta_linha,
-                                                                            nova_coluna + delta_coluna)
+                        proxima_linha = nova_linha + delta_linha
+                        proxima_coluna = nova_coluna + delta_coluna
+                        encontrou_captura = False
+
+                        while 0 <= proxima_linha <= 7 and 0 <= proxima_coluna <= 7:
+                            proxima_posicao = self.getPositionByLinhaColuna(proxima_linha, proxima_coluna)
+
                             if proxima_posicao.ocupante is None:
+                                # Possível captura múltipla
                                 possiveis_casas.append(proxima_posicao)
+                                proxima_linha += delta_linha
+                                proxima_coluna += delta_coluna
+                            else:
+                                if encontrou_captura:
+                                    break
+                                if proxima_posicao.ocupante.getCor() != cor:
+                                    encontrou_captura = True
+
+                            nova_linha = proxima_linha
+                            nova_coluna = proxima_coluna
+                            proxima_linha += delta_linha
+                            proxima_coluna += delta_coluna
 
                 nova_linha += delta_linha
                 nova_coluna += delta_coluna
@@ -259,7 +280,6 @@ class Tabuleiro:
         else:
             self.appendRodadasSemCaptura()
 
-
     def getPositionByLinhaColuna(self, linha: int, coluna: int) -> Position:
         for position in self.positions:
             if position.linha == linha and position.coluna == coluna:
@@ -292,27 +312,29 @@ class Tabuleiro:
         return lisPlayers
 
     def avaliarEncerramento(self):
-        # if self.rodadasSemCaptura == 20:
-        #     self.setStatus(MatchStatus.EMPATE)
-        #     return True
+        if self.rodadasSemCaptura == 20:
+            self.setStatus(MatchStatus.EMPATE)
+            return True
         for jogador in self.getPlayers():
             if not jogador.daVez:
                 if len(self.getPositionsWithPiecesOfPlayer(jogador)) == 0:
                     self.setStatus(MatchStatus.VENCEDOR)
-                    self.perdedor = jogador
+                    self.setPerdedor(jogador)
                     print("retornando aqui >> vencedor")
                     return True
                 else:
                     pecasBloqueadas: list[Peca] = []
                     # Rever esse algoritimo
-                    print(jogador.nome)
-                    for position in self.getPositionsWithPiecesOfPlayer(jogador):
-                        if self.pecaBloqueada(position=position):
-                            pecasBloqueadas.append(position.getOcupante())
-                    print("pecasBloqueadas " + str(len(pecasBloqueadas)))
-                    print("pecasEmJogo " + str(jogador.pecasEmJogo))
+                    for position in self.positions:
+                        if position.getOcupante() is not None:
+                            if position.getOcupante().getJogador() == jogador:
+                                if self.pecaBloqueada(position):
+                                    pecasBloqueadas.append(position.getOcupante())
+                    print("pecasBloqueadas: " + str(len(pecasBloqueadas)))
+                    print("pecasEmJogo: " + str(jogador.pecasEmJogo))
                     if len(pecasBloqueadas) == jogador.pecasEmJogo:
                         self.setStatus(MatchStatus.VENCEDOR)
+                        self.setPerdedor(jogador)
                         print("retornando aqui >> pecasBloqueadas")
                         return True
                     else:
@@ -326,14 +348,15 @@ class Tabuleiro:
                                 print("retornando aqui >> lancesDamas")
                                 return True
                             else:
-                                empate = self.verificarEmpate()
-                                if empate:
-                                    self.setStatus(MatchStatus.EMPATE)
-                                    print("retornando aqui >> empate")
-                                    return True
-                                else:
-                                    print("retornando aqui >> finalElse")
-                                    return False
+                                if self.rodadasSemCaptura == 10:
+                                    empate = self.verificarEmpate()
+                                    if empate:
+                                        self.setStatus(MatchStatus.EMPATE)
+                                        print("retornando aqui >> empate")
+                                        return True
+                                    else:
+                                        print("retornando aqui >> finalElse")
+                                        return False
 
     def verificarEmpate(self):
         # 2 damas contra 2 damas;
@@ -344,14 +367,14 @@ class Tabuleiro:
             return True
         elif len(self.jogadorLocal.getDamas()) == 2 and len(self.jogadorRemoto.getPecasEmJogo()) == 1:
             return True
-        elif len(self.jogadorLocal.getDamas()) == 2 and len(self.jogadorRemoto.getDamas()) == 1 and len(self.jogadorRemoto.getPecasEmJogo()) == 1:
+        elif len(self.jogadorLocal.getDamas()) == 2 and len(self.jogadorRemoto.getDamas()) == 1 and len(
+                self.jogadorRemoto.getPecasEmJogo()) == 1:
             return True
-        elif len(self.jogadorLocal.getDamas()) == 1 and len(self.jogadorRemoto.getDamas()) == 1 and len(self.jogadorLocal.getPecasEmJogo()) == 1 and len(self.jogadorRemoto.pecas) == 1:
+        elif len(self.jogadorLocal.getDamas()) == 1 and len(self.jogadorRemoto.getDamas()) == 1 and len(
+                self.jogadorLocal.getPecasEmJogo()) == 1 and len(self.jogadorRemoto.getPecasEmJogo()) == 1:
             return True
         else:
             return False
-
-
 
         # pecasLocal: list[Peca] = self.getPlayerPieces(self.jogadorLocal)
         # pecasRemoto: list[Peca] = self.getPlayerPieces(self.jogadorRemoto)
@@ -446,7 +469,7 @@ class Tabuleiro:
     def getPositionsWithPiecesOfPlayer(self, jogador: Jogador) -> list[Position]:
         finalList: list[Position] = []
         for position in self.getPositions():
-            if position.getOcupante() is not None and\
+            if position.getOcupante() is not None and \
                     position.getOcupante().getJogador().getIdJogador() == jogador.getIdJogador():
                 finalList.append(position)
         return finalList
@@ -461,3 +484,6 @@ class Tabuleiro:
 
     def getLances(self) -> list[Lance]:
         return self.lances
+
+    def setPerdedor(self, perdedor: Jogador):
+        self.perdedor = perdedor

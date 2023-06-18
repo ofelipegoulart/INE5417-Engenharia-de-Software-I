@@ -159,6 +159,8 @@ class ActorPlayer(PyNetgamesServerListener):
                                     text="Partida empatada! Reinicie a aplicação")  # Cria um texto centralizado
             self.canvas.bind("<Button-1>", self.fechar_janela)
         elif self.tabuleiro.match_status == MatchStatus.VENCEDOR:
+            print(self.tabuleiro.perdedor.getIdJogador())
+            print(self.tabuleiro.jogadorLocal.getIdJogador())
             playerVencedor = self.tabuleiro.jogadorLocal if \
                 self.tabuleiro.perdedor.getIdJogador() == self.tabuleiro.jogadorRemoto.getIdJogador() \
                 else self.tabuleiro.jogadorRemoto
