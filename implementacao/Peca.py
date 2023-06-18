@@ -26,6 +26,7 @@ class Peca(object):
         return self.dama
 
     def setDama(self, dama: bool):
+        self.jogador.aumentarDamas()
         self.dama = dama
 
     def getJogador(self) -> Jogador:

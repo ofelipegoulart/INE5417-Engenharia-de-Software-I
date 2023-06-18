@@ -10,7 +10,8 @@ class Jogador(object):
         self.daVez: bool = None
         self.vencedor: bool = None
         self.damas: int = 0
-        self.pecasNorm: int = 12
+        self.peoes: int = 12
+        self.pecasEmJogo: int = 12
         self.idJogador: int = None
 
     def getNome(self) -> str:
@@ -37,8 +38,25 @@ class Jogador(object):
     def getDamas(self) -> int:
         return self.damas
 
-    def getNormalPieces(self) -> int:
-        pass
+    def getPeoes(self) -> int:
+        return self.peoes
+
+    def diminuirPeoes(self) -> None:
+        self.peoes -= 1
+
+    def aumentarDamas(self) -> None:
+        self.diminuirPeoes()
+        self.damas += 1
+
+    def getPecasEmJogo(self) -> int:
+        return self.pecasEmJogo
+
+    def diminuirPecasEmJogo(self, ehPeao: bool) -> None:
+        if ehPeao:
+            self.diminuirPeoes()
+        else:
+            self.damas -= 1
+        self.pecasEmJogo -= 1
 
     def setIdJogador(self, idJogador):
         self.idJogador = idJogador

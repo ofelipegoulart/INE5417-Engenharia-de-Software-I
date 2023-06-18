@@ -289,6 +289,9 @@ class Tabuleiro:
                     pecasCapturadasNaRodada.append(ocupante)
                     # self.zerarRodadasSemCaptura()
         if len(pecasCapturadasNaRodada) != 0:
+            for peca in pecasCapturadasNaRodada:
+                print("Jogador " + peca.jogador.nome + " perdeu uma peça")
+                peca.jogador.diminuirPecasEmJogo(peca.dama)
             self.zerarRodadasSemCaptura()
         else:
             self.appendRodadasSemCaptura()
@@ -326,9 +329,9 @@ class Tabuleiro:
         return lisPlayers
 
     def avaliarEncerramento(self):
-        if self.rodadasSemCaptura == 20:
-            self.setStatus(MatchStatus.EMPATE)
-            return True
+        # if self.rodadasSemCaptura == 20:
+        #     self.setStatus(MatchStatus.EMPATE)
+        #     return True
         for jogador in self.getPlayers():
             if not jogador.daVez:
                 if len(self.getPositionsWithPiecesOfPlayer(jogador)) == 0:
@@ -339,10 +342,13 @@ class Tabuleiro:
                 else:
                     pecasBloqueadas: list[Peca] = []
                     # Rever esse algoritimo
+                    print(jogador.nome)
                     for position in self.getPositionsWithPiecesOfPlayer(jogador):
                         if self.pecaBloqueada(position=position):
                             pecasBloqueadas.append(position.getOcupante())
-                    if len(pecasBloqueadas) == len(self.getPlayerPieces(jogador)):
+                    print("pecasBloqueadas " + str(len(pecasBloqueadas)))
+                    print("pecasEmJogo " + str(jogador.pecasEmJogo))
+                    if len(pecasBloqueadas) == jogador.pecasEmJogo:
                         self.setStatus(MatchStatus.VENCEDOR)
                         print("retornando aqui >> pecasBloqueadas")
                         return True
@@ -358,7 +364,7 @@ class Tabuleiro:
                                 return True
                             else:
                                 empate = self.verificarEmpate()
-                                if (empate):
+                                if empate:
                                     self.setStatus(MatchStatus.EMPATE)
                                     print("retornando aqui >> empate")
                                     return True
@@ -367,28 +373,40 @@ class Tabuleiro:
                                     return False
 
     def verificarEmpate(self):
-        lancesSemCaptura: list[Lance] = []
-        for lance in self.lances:
-            if not lance.getCaptura():
-                lancesSemCaptura.append(lance)
-        if len(lancesSemCaptura) == 20:
-            pecasLocal: list[Peca] = self.getPlayerPieces(self.jogadorLocal)
-            pecasRemoto: list[Peca] = self.getPlayerPieces(self.jogadorRemoto)
-            if len(pecasLocal) == 2 and len(pecasRemoto) == 2:
-                damasLocal: list[Peca] = []
-                for pecaLocal in pecasLocal:
-                    if pecaLocal.getDama():
-                        damasLocal.append(pecaLocal)
-                damasRemoto: list[Peca] = []
-                for pecaRemoto in pecasRemoto:
-                    if pecaRemoto.getDama():
-                        damasRemoto.append(pecaRemoto)
-                if len(damasLocal) == 2 and len(damasRemoto) == 2:
-                    return True
-                if (len(damasLocal) == 2 and len(damasRemoto) == 1) or (len(damasLocal) == 1 and len(damasRemoto) == 2):
-                    return True
+        # 2 damas contra 2 damas;
+        # 2 damas contra uma;
+        # 2 damas contra uma dama e uma pedra;
+        # uma dama contra uma dama e uma dama contra uma dama e uma pedra, são declarados empatados após 5 lances.
+        if len(self.jogadorLocal.getDamas()) == 2 and len(self.jogadorRemoto.getDamas()) == 2:
+            return True
+        elif len(self.jogadorLocal.getDamas()) == 2 and len(self.jogadorRemoto.getPecasEmJogo()) == 1:
+            return True
+        elif len(self.jogadorLocal.getDamas()) == 2 and len(self.jogadorRemoto.getDamas()) == 1 and len(self.jogadorRemoto.getPecasEmJogo()) == 1:
+            return True
+        elif len(self.jogadorLocal.getDamas()) == 1 and len(self.jogadorRemoto.getDamas()) == 1 and len(self.jogadorLocal.getPecasEmJogo()) == 1 and len(self.jogadorRemoto.pecas) == 1:
+            return True
         else:
             return False
+
+
+
+        # pecasLocal: list[Peca] = self.getPlayerPieces(self.jogadorLocal)
+        # pecasRemoto: list[Peca] = self.getPlayerPieces(self.jogadorRemoto)
+        # if len(pecasLocal) == 2 and len(pecasRemoto) == 2:
+        #     damasLocal: list[Peca] = []
+        #     for pecaLocal in pecasLocal:
+        #         if pecaLocal.getDama():
+        #             damasLocal.append(pecaLocal)
+        #     damasRemoto: list[Peca] = []
+        #     for pecaRemoto in pecasRemoto:
+        #         if pecaRemoto.getDama():
+        #             damasRemoto.append(pecaRemoto)
+        #     if len(damasLocal) == 2 and len(damasRemoto) == 2:
+        #         return True
+        #     if (len(damasLocal) == 2 and len(damasRemoto) == 1) or (len(damasLocal) == 1 and len(damasRemoto) == 2):
+        #         return True
+        # else:
+        #     return False
 
     def removerPecas(self):
         for position in self.getPositions():
@@ -468,13 +486,6 @@ class Tabuleiro:
             if position.getOcupante() is not None and\
                     position.getOcupante().getJogador().getIdJogador() == jogador.getIdJogador():
                 finalList.append(position)
-        return finalList
-
-    def getPlayerPieces(self, jogador: Jogador) -> list[Peca]:
-        finalList: list[Peca] = []
-        for position in self.getPositions():
-            if position.getOcupante() == jogador:
-                finalList.append(position.getOcupante())
         return finalList
 
     def trocarTurnos(self):

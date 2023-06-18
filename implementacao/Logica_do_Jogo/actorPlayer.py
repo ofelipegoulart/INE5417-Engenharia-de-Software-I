@@ -222,7 +222,6 @@ class ActorPlayer(PyNetgamesServerListener):
             self.tabuleiro.removerPecas()
             posInitial.setOcupante(None)
             partidaEncerrada = self.tabuleiro.avaliarEncerramento()
-            print(self.tabuleiro.rodadasSemCaptura)
             if not partidaEncerrada:
                 self.tabuleiro.trocarTurnos()
             self.montarPositcoes()
@@ -264,13 +263,15 @@ class ActorPlayer(PyNetgamesServerListener):
             pecasLocal: list[Peca] = []
             pecasRemoto: list[Peca] = []
             for position in self.tabuleiro.positions:
-                if position.ocupante != None:
+                if position.ocupante is not None:
                     peca = position.ocupante
                     if position.ocupante.getCor() == CorPeca.VERMELHO:
                         position.getOcupante().setJogador(self.tabuleiro.jogadorLocal)
+                        position.getOcupante().getJogador().setNome("Vermelho")
                         pecasLocal.append(peca)
                     if position.ocupante.getCor() == CorPeca.PRETO:
                         position.getOcupante().setJogador(self.tabuleiro.jogadorRemoto)
+                        position.getOcupante().getJogador().setNome("Preto")
                         pecasRemoto.append(peca)
             self.tabuleiro.jogadorLocal.pecas = pecasLocal
             self.tabuleiro.jogadorLocal.daVez = True
@@ -287,9 +288,11 @@ class ActorPlayer(PyNetgamesServerListener):
                     peca = position.ocupante
                     if position.ocupante.getCor() == CorPeca.VERMELHO:
                         position.getOcupante().setJogador(self.tabuleiro.jogadorRemoto)
+                        position.getOcupante().getJogador().setNome("Vermelho")
                         pecasRemoto.append(peca)
                     if position.ocupante.getCor() == CorPeca.PRETO:
                         position.getOcupante().setJogador(self.tabuleiro.jogadorLocal)
+                        position.getOcupante().getJogador().setNome("Preto")
                         pecasLocal.append(peca)
             self.tabuleiro.jogadorLocal.pecas = pecasLocal
             self.tabuleiro.jogadorLocal.daVez = False
