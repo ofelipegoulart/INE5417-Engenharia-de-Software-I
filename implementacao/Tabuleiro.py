@@ -1,8 +1,6 @@
 from implementacao.CorCasa import CorCasa
 from implementacao.CorPeca import CorPeca
 from implementacao.Jogador import Jogador
-from implementacao.Lance import Lance
-from implementacao.Logica_do_Jogo.DamasInterface import DamasInterface
 from implementacao.MatchStatus import MatchStatus
 from implementacao.Peca import Peca
 from implementacao.Position import Position
@@ -24,12 +22,10 @@ class Tabuleiro:
         self.jogadas: list[Position] = []
         self.errorLocalMessage = None
         self.pecasCapturadas: list[Peca] = []
-        self.lances: list[Lance] = []
         self.perdedor: Jogador = None
         self.statusPropostaEmpate: StatusPropostaEmpate = StatusPropostaEmpate.SEM_PROPOSTA
 
     def click(self, linha: int, coluna: int, local_turn: bool, aceitaPropostaEmpate: bool or None) -> bool:
-        state = self.getEstado()
         proposta_empate = self.get_proposta_empate()
 
         # Verifica se há uma proposta de empate
@@ -338,25 +334,16 @@ class Tabuleiro:
                         print("retornando aqui >> pecasBloqueadas")
                         return True
                     else:
-                        if len(self.lances) >= 5:
-                            lancesDama: list[Lance] = []
-                            for lance in self.getLances():
-                                if lance.getPeca().getDama():
-                                    lancesDama.append(lance)
-                            if len(lancesDama) == 20:
+                        # if self.rodadasSemCaptura >= 5:
+                        if self.rodadasSemCaptura == 10:
+                            empate = self.verificarEmpate()
+                            if empate:
                                 self.setStatus(MatchStatus.EMPATE)
-                                print("retornando aqui >> lancesDamas")
+                                print("retornando aqui >> empate")
                                 return True
                             else:
-                                if self.rodadasSemCaptura == 10:
-                                    empate = self.verificarEmpate()
-                                    if empate:
-                                        self.setStatus(MatchStatus.EMPATE)
-                                        print("retornando aqui >> empate")
-                                        return True
-                                    else:
-                                        print("retornando aqui >> finalElse")
-                                        return False
+                                print("retornando aqui >> finalElse")
+                                return False
 
     def verificarEmpate(self):
         # 2 damas contra 2 damas;
@@ -376,56 +363,11 @@ class Tabuleiro:
         else:
             return False
 
-        # pecasLocal: list[Peca] = self.getPlayerPieces(self.jogadorLocal)
-        # pecasRemoto: list[Peca] = self.getPlayerPieces(self.jogadorRemoto)
-        # if len(pecasLocal) == 2 and len(pecasRemoto) == 2:
-        #     damasLocal: list[Peca] = []
-        #     for pecaLocal in pecasLocal:
-        #         if pecaLocal.getDama():
-        #             damasLocal.append(pecaLocal)
-        #     damasRemoto: list[Peca] = []
-        #     for pecaRemoto in pecasRemoto:
-        #         if pecaRemoto.getDama():
-        #             damasRemoto.append(pecaRemoto)
-        #     if len(damasLocal) == 2 and len(damasRemoto) == 2:
-        #         return True
-        #     if (len(damasLocal) == 2 and len(damasRemoto) == 1) or (len(damasLocal) == 1 and len(damasRemoto) == 2):
-        #         return True
-        # else:
-        #     return False
-
     def removerPecas(self):
         for position in self.getPositions():
             for peca in self.pecasCapturadas:
                 if position.getOcupante() is not None and peca is not None and peca.getId() == position.getOcupante().getId():
                     position.setOcupante(None)
-
-    def getJogadas(self) -> list[Position]:
-        return self.jogadas
-
-    def iniciarPartida(self, local_turn: bool):
-        pass
-
-    def fazerLance(self, lance: Lance):
-        pass
-
-    def reiniciar(self):
-        pass
-
-    def getEstado(self) -> DamasInterface:
-        pass
-
-    def getPosicao(self, lance: Lance) -> Position:
-        pass
-
-    def getJogadorConectado(self) -> Jogador:
-        pass
-
-    def getJogadorDesconectado(self) -> Jogador:
-        pass
-
-    def assumirVencedor(self, lance: Lance):
-        pass
 
     def setStatus(self, status: MatchStatus):
         self.match_status = status
@@ -436,11 +378,11 @@ class Tabuleiro:
     def getPositions(self) -> list[Position]:
         return self.positions
 
+    def getJogadas(self):
+        return self.jogadas
+
     def setPositions(self, positions: list[Position]):
         self.positions = positions
-
-    def evaluateEndGame(self, lance: Lance) -> bool:
-        pass
 
     def getRodadasSemCaptura(self) -> int:
         return self.rodadasSemCaptura
@@ -481,9 +423,6 @@ class Tabuleiro:
         else:
             self.jogadorLocal.daVez = True
             self.jogadorRemoto.daVez = False
-
-    def getLances(self) -> list[Lance]:
-        return self.lances
 
     def setPerdedor(self, perdedor: Jogador):
         self.perdedor = perdedor

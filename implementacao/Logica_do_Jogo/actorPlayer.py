@@ -256,8 +256,6 @@ class ActorPlayer(PyNetgamesServerListener):
                 posInitial = self.tabuleiro.getPositionByLinhaColuna(
                     positionInicial.getLinha(), positionInicial.getColuna())
                 # identifica se teve captura
-                if self.tabuleiro.getPecasCapturadas().__len__ != 0:
-                    pass
                     # Verifica se a casa selecionada é uma ponta do tabuleiro
                 if (positionFinal.getLinha() == 0 and posInitial.getOcupante().getCor() == CorPeca.VERMELHO) or (
                         positionFinal.getLinha() == 7 and posInitial.getOcupante().getCor() == CorPeca.PRETO):
@@ -322,10 +320,12 @@ class ActorPlayer(PyNetgamesServerListener):
         self.server_proxy.send_match(2)
 
     def receive_disconnect(self):
-        pass
+        self.exibir_notificacao("Remoto desconectou, fechando")
+        exit()
 
     def receive_error(self, error: Exception):
-        pass
+        self.exibir_notificacao("Erro no servidor, fechando")
+        exit()
 
     def receive_match(self, message: MatchStartedMessage):
         self.jogo_menu.entryconfig("Desistir", state="normal")

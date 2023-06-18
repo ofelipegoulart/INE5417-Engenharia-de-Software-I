@@ -14,16 +14,6 @@ class Position(object):
         self.linha: int = linha
         self.coluna: int = coluna
 
-    # def informarOcupada(self, linha: int, coluna: int) -> bool:
-    #     pass
-
-    # def informarOcupante(self, linha: int, coluna: int) -> Peca:
-
-    #     pass
-
-    # def toJSON(self):
-    #     return jsonpickle.
-
     def getCasa(self) -> CorCasa:
         return self.casa
 
@@ -41,9 +31,6 @@ class Position(object):
 
     def setColuna(self, coluna: int) -> None:
         self.coluna = coluna
-
-    def validPositions(self) -> list:
-        pass
 
     def getOcupante(self) -> Peca:
         return self.ocupante

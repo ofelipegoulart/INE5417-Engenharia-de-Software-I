@@ -1,9 +1,7 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 import CorPeca
-import Lance
 import Jogador
-from typing import List
 
 from implementacao.Position import Position
 

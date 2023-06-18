@@ -32,9 +32,6 @@ class Jogador(object):
     def setVencedor(self, vencedor: bool) -> None:
         self.vencedor = vencedor
 
-    def update_pecas(self, cor: CorPeca):
-        pass
-
     def getDamas(self) -> int:
         return self.damas
 
