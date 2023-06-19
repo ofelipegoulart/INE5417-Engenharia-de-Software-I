@@ -91,11 +91,8 @@ class ActorPlayer(PyNetgamesServerListener):
         self.square_click(None)
 
     def adiciona_comandos(self):
-        self.jogo_menu.add_command(label="Iniciar", command=self.send_connect)
-        self.jogo_menu.add_command(label="Desistir")
         self.jogo_menu.add_command(label="Oferecer empate", command=self.oferecerEmpate)
         self.jogo_menu.add_command(label="Sair", command=self.fechar_janela)
-        self.jogo_menu.entryconfig("Desistir", state="disable")
         self.jogo_menu.entryconfig("Oferecer empate", state="disable")
 
     # @trace_to_puml
