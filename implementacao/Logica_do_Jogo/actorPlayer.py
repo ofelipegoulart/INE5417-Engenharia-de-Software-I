@@ -1,4 +1,3 @@
-import napkin
 import tkinter as tk
 
 from py_netgames_client.tkinter_client.PyNetgamesServerProxy import PyNetgamesServerProxy
@@ -6,7 +5,6 @@ from py_netgames_client.tkinter_client.PyNetgamesServerListener import PyNetgame
 from py_netgames_model.messaging.message import MatchStartedMessage, MoveMessage
 from implementacao.CorCasa import CorCasa
 from implementacao.CorPeca import CorPeca
-from implementacao.Jogador import Jogador
 from implementacao.MatchStatus import MatchStatus
 from implementacao.Peca import Peca
 from implementacao.Position import Position
@@ -15,7 +13,6 @@ from tkinter import messagebox
 from implementacao.StatusPropostaEmpate import StatusPropostaEmpate
 from implementacao.Tabuleiro import Tabuleiro
 import jsonpickle
-from pydoctrace.doctrace import trace_to_puml
 
 
 class ActorPlayer(PyNetgamesServerListener):
