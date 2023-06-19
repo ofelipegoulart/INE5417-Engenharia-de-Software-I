@@ -208,11 +208,15 @@ class Tabuleiro:
                                     break
                                 if proxima_posicao.ocupante.getCor() != cor:
                                     encontrou_captura = True
+                                else:
+                                    break
 
                             nova_linha = proxima_linha
                             nova_coluna = proxima_coluna
                             proxima_linha += delta_linha
                             proxima_coluna += delta_coluna
+                    else:
+                        break
 
                 nova_linha += delta_linha
                 nova_coluna += delta_coluna
@@ -311,7 +315,7 @@ class Tabuleiro:
             return True
         for jogador in self.getPlayers():
             if not jogador.daVez:
-                if len(self.getPositionsWithPiecesOfPlayer(jogador)) == 0: # Detalhar
+                if jogador.pecasEmJogo == 0:
                     self.setStatus(MatchStatus.VENCEDOR)
                     self.setPerdedor(jogador)
                     return True
@@ -337,6 +341,8 @@ class Tabuleiro:
                                 return True
                             else:
                                 return False
+                        else:
+                            return False
             else:
                 pass
 

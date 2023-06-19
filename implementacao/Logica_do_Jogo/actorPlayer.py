@@ -310,8 +310,6 @@ class ActorPlayer(PyNetgamesServerListener):
     def add_listener(self):
         self.server_proxy = PyNetgamesServerProxy()
         self.server_proxy.add_listener(self)
-
-        # self.jogo_menu.entryconfig("Desistir", state="disable")
         self.jogo_menu.entryconfig("Oferecer empate", state="disable")
 
     def send_connect(self):
@@ -319,7 +317,6 @@ class ActorPlayer(PyNetgamesServerListener):
 
     def receive_connection_success(self):
         self.exibir_notificacao("Conectado")
-        self.jogo_menu.entryconfig("Iniciar", state="disable")
         self.send_match()
 
     def send_match(self):
@@ -334,8 +331,6 @@ class ActorPlayer(PyNetgamesServerListener):
         self.fechar_janela()
 
     def receive_match(self, message: MatchStartedMessage):
-        self.jogo_menu.entryconfig("Desistir", state="normal")
-        self.jogo_menu.entryconfig("Oferecer empate", state="normal")
         self.partidaEmAndamento = True
         self.match_id = message.match_id
         initialPosition = message.position
