@@ -42,11 +42,8 @@ class ActorPlayer(PyNetgamesServerListener):
         root = self.tk
         menu_bar = tk.Menu(root)
         self.jogo_menu = tk.Menu(menu_bar, tearoff=0)
-        self.jogo_menu.add_command(label="Iniciar", command=self.send_connect)
-        self.jogo_menu.add_command(label="Desistir")
         self.jogo_menu.add_command(label="Oferecer empate", command=self.oferecerEmpate)
         self.jogo_menu.add_command(label="Sair", command=self.fechar_janela)
-        self.jogo_menu.entryconfig("Desistir", state="disable")
         self.jogo_menu.entryconfig("Oferecer empate", state="disable")
         menu_bar.add_cascade(label="Jogo", menu=self.jogo_menu)
         root.geometry(f"{self.WINDOW_WIDTH}x{self.WINDOW_HEIGHT}")
@@ -245,7 +242,7 @@ class ActorPlayer(PyNetgamesServerListener):
     def exibir_notificacao(self, message: str):
         messagebox.showinfo("Notificação de erro", message=message)
 
-    def fechar_janela(self, event):
+    def fechar_janela(self, event = None):
         self.tk.destroy()
 
     def realizarLance(self, positionInicial: Position, positionFinal: Position):
@@ -304,8 +301,6 @@ class ActorPlayer(PyNetgamesServerListener):
     def add_listener(self):
         self.server_proxy = PyNetgamesServerProxy()
         self.server_proxy.add_listener(self)
-
-        # self.jogo_menu.entryconfig("Desistir", state="disable")
         self.jogo_menu.entryconfig("Oferecer empate", state="disable")
 
     def send_connect(self):
@@ -313,7 +308,6 @@ class ActorPlayer(PyNetgamesServerListener):
 
     def receive_connection_success(self):
         print('**************************CONECTADO********************')
-        self.jogo_menu.entryconfig("Iniciar", state="disable")
         self.send_match()
 
     def send_match(self):
@@ -321,15 +315,13 @@ class ActorPlayer(PyNetgamesServerListener):
 
     def receive_disconnect(self):
         self.exibir_notificacao("Remoto desconectou, fechando")
-        exit()
+        self.fechar_janela(None)
 
     def receive_error(self, error: Exception):
         self.exibir_notificacao("Erro no servidor, fechando")
-        exit()
+        self.fechar_janela(None)
 
     def receive_match(self, message: MatchStartedMessage):
-        self.jogo_menu.entryconfig("Desistir", state="normal")
-        self.jogo_menu.entryconfig("Oferecer empate", state="normal")
         self.partidaEmAndamento = True
         self.match_id = message.match_id
         print("RECEBEU PARTIDA")

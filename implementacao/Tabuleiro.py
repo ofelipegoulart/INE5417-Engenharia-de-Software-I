@@ -210,11 +210,15 @@ class Tabuleiro:
                                     break
                                 if proxima_posicao.ocupante.getCor() != cor:
                                     encontrou_captura = True
+                                else:
+                                    break
 
                             nova_linha = proxima_linha
                             nova_coluna = proxima_coluna
                             proxima_linha += delta_linha
                             proxima_coluna += delta_coluna
+                    else:
+                        break
 
                 nova_linha += delta_linha
                 nova_coluna += delta_coluna
@@ -313,7 +317,7 @@ class Tabuleiro:
             return True
         for jogador in self.getPlayers():
             if not jogador.daVez:
-                if len(self.getPositionsWithPiecesOfPlayer(jogador)) == 0:
+                if jogador.pecasEmJogo == 0:
                     self.setStatus(MatchStatus.VENCEDOR)
                     self.setPerdedor(jogador)
                     print("retornando aqui >> vencedor")
@@ -344,21 +348,21 @@ class Tabuleiro:
                             else:
                                 print("retornando aqui >> finalElse")
                                 return False
+                        else:
+                            return False
 
     def verificarEmpate(self):
         # 2 damas contra 2 damas;
         # 2 damas contra uma;
         # 2 damas contra uma dama e uma pedra;
         # uma dama contra uma dama e uma dama contra uma dama e uma pedra, são declarados empatados após 5 lances.
-        if len(self.jogadorLocal.getDamas()) == 2 and len(self.jogadorRemoto.getDamas()) == 2:
+        if self.jogadorLocal.getDamas() == 2 and self.jogadorRemoto.getDamas() == 2:
             return True
-        elif len(self.jogadorLocal.getDamas()) == 2 and len(self.jogadorRemoto.getPecasEmJogo()) == 1:
+        elif self.jogadorLocal.getDamas() == 2 and self.jogadorRemoto.getPecasEmJogo() == 1:
             return True
-        elif len(self.jogadorLocal.getDamas()) == 2 and len(self.jogadorRemoto.getDamas()) == 1 and len(
-                self.jogadorRemoto.getPecasEmJogo()) == 1:
+        elif self.jogadorLocal.getDamas() == 2 and self.jogadorRemoto.getDamas() == 1 and self.jogadorRemoto.getPecasEmJogo() == 1:
             return True
-        elif len(self.jogadorLocal.getDamas()) == 1 and len(self.jogadorRemoto.getDamas()) == 1 and len(
-                self.jogadorLocal.getPecasEmJogo()) == 1 and len(self.jogadorRemoto.getPecasEmJogo()) == 1:
+        elif self.jogadorLocal.getDamas() == 1 and self.jogadorRemoto.getDamas() == 1 and self.jogadorLocal.getPecasEmJogo() == 1 and self.jogadorRemoto.getPecasEmJogo() == 1:
             return True
         else:
             return False
