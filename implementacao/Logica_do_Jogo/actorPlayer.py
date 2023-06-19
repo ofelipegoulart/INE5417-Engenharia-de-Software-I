@@ -1,6 +1,4 @@
-import uuid
-from ast import Dict
-import json
+import napkin
 import tkinter as tk
 
 from py_netgames_client.tkinter_client.PyNetgamesServerProxy import PyNetgamesServerProxy
@@ -17,6 +15,7 @@ from tkinter import messagebox
 from implementacao.StatusPropostaEmpate import StatusPropostaEmpate
 from implementacao.Tabuleiro import Tabuleiro
 import jsonpickle
+from pydoctrace.doctrace import trace_to_puml
 
 
 class ActorPlayer(PyNetgamesServerListener):
@@ -25,7 +24,7 @@ class ActorPlayer(PyNetgamesServerListener):
         self.jogo_menu = None
         self.canvas = None
         self.tk = tk
-        self.tabuleiro = Tabuleiro(tk)
+        self.tabuleiro = Tabuleiro()
         self.partidaEmAndamento = False
         self.BOARD_SIZE = 8
         self.SQUARE_SIZE = 50
@@ -42,12 +41,7 @@ class ActorPlayer(PyNetgamesServerListener):
         root = self.tk
         menu_bar = tk.Menu(root)
         self.jogo_menu = tk.Menu(menu_bar, tearoff=0)
-        self.jogo_menu.add_command(label="Iniciar", command=self.send_connect)
-        self.jogo_menu.add_command(label="Desistir")
-        self.jogo_menu.add_command(label="Oferecer empate", command=self.oferecerEmpate)
-        self.jogo_menu.add_command(label="Sair", command=self.fechar_janela)
-        self.jogo_menu.entryconfig("Desistir", state="disable")
-        self.jogo_menu.entryconfig("Oferecer empate", state="disable")
+        self.adiciona_comandos()
         menu_bar.add_cascade(label="Jogo", menu=self.jogo_menu)
         root.geometry(f"{self.WINDOW_WIDTH}x{self.WINDOW_HEIGHT}")
         root.title("Damas")
@@ -64,12 +58,12 @@ class ActorPlayer(PyNetgamesServerListener):
                 y2 = y1 + self.SQUARE_SIZE
                 if (row + col) % 2 == 0:
                     # self.tabuleiro.positions
-                    self.tabuleiro.positions.append(
-                        Position(linha=row, coluna=col, cor=CorCasa.BRANCO))
+                    position = Position(linha=row, coluna=col, cor=CorCasa.BRANCO)
+                    self.tabuleiro.positions.append(position)
 
                 else:
-                    self.tabuleiro.positions.append(
-                        Position(linha=row, coluna=col, cor=CorCasa.PRETO))
+                    position = Position(linha=row, coluna=col, cor=CorCasa.PRETO)
+                    self.tabuleiro.positions.append(position)
                     # retangulo = self.canvas.create_rectangle(
                     #     x1, y1, x2, y2, fill="gray", tags=f"square-{row}-{col}")
                 # self.retangulos[(row, col)] = retangulo
@@ -80,22 +74,34 @@ class ActorPlayer(PyNetgamesServerListener):
                     if row < 3:
                         pos = self.tabuleiro.getPositionByLinhaColuna(
                             linha=row, coluna=col)
-                        pos.setOcupante(Peca(cor=CorPeca.PRETO, pecaId=pecaId))
+                        peca = Peca(cor=CorPeca.PRETO, pecaId=pecaId)
+                        pos.setOcupante(peca)
 
                     elif row > 4:
-                        self.tabuleiro.getPositionByLinhaColuna(
-                            linha=row, coluna=col).ocupante = Peca(cor=CorPeca.VERMELHO, pecaId=pecaId)
+                        pos = self.tabuleiro.getPositionByLinhaColuna(
+                            linha=row, coluna=col)
+                        peca = Peca(cor=CorPeca.VERMELHO, pecaId=pecaId)
+                        pos.setOcupante(peca)
         self.montarPositcoes()
         self.add_listener()
         root.config(menu=menu_bar)
-        # if status ==
 
         self.canvas.bind("<Button-1>", self.square_click)
+        self.send_connect()
         root.mainloop()
 
     def oferecerEmpate(self):
         self.square_click(None)
 
+    def adiciona_comandos(self):
+        self.jogo_menu.add_command(label="Iniciar", command=self.send_connect)
+        self.jogo_menu.add_command(label="Desistir")
+        self.jogo_menu.add_command(label="Oferecer empate", command=self.oferecerEmpate)
+        self.jogo_menu.add_command(label="Sair", command=self.fechar_janela)
+        self.jogo_menu.entryconfig("Desistir", state="disable")
+        self.jogo_menu.entryconfig("Oferecer empate", state="disable")
+
+    # @trace_to_puml
     def square_click(self, event, aceitaPropostaEmpate=None):
         if not self.partidaEmAndamento:
             self.exibir_notificacao("Partida não iniciada")
@@ -245,7 +251,7 @@ class ActorPlayer(PyNetgamesServerListener):
     def exibir_notificacao(self, message: str):
         messagebox.showinfo("Notificação de erro", message=message)
 
-    def fechar_janela(self, event):
+    def fechar_janela(self, event=None):
         self.tk.destroy()
 
     def realizarLance(self, positionInicial: Position, positionFinal: Position):
@@ -256,7 +262,7 @@ class ActorPlayer(PyNetgamesServerListener):
                 posInitial = self.tabuleiro.getPositionByLinhaColuna(
                     positionInicial.getLinha(), positionInicial.getColuna())
                 # identifica se teve captura
-                    # Verifica se a casa selecionada é uma ponta do tabuleiro
+                # Verifica se a casa selecionada é uma ponta do tabuleiro
                 if (positionFinal.getLinha() == 0 and posInitial.getOcupante().getCor() == CorPeca.VERMELHO) or (
                         positionFinal.getLinha() == 7 and posInitial.getOcupante().getCor() == CorPeca.PRETO):
                     posInitial.getOcupante().setDama(True)
@@ -312,7 +318,7 @@ class ActorPlayer(PyNetgamesServerListener):
         self.server_proxy.send_connect("wss://py-netgames-server.fly.dev")
 
     def receive_connection_success(self):
-        print('**************************CONECTADO********************')
+        self.exibir_notificacao("Conectado")
         self.jogo_menu.entryconfig("Iniciar", state="disable")
         self.send_match()
 
@@ -321,59 +327,43 @@ class ActorPlayer(PyNetgamesServerListener):
 
     def receive_disconnect(self):
         self.exibir_notificacao("Remoto desconectou, fechando")
-        exit()
+        self.fechar_janela()
 
     def receive_error(self, error: Exception):
         self.exibir_notificacao("Erro no servidor, fechando")
-        exit()
+        self.fechar_janela()
 
     def receive_match(self, message: MatchStartedMessage):
         self.jogo_menu.entryconfig("Desistir", state="normal")
         self.jogo_menu.entryconfig("Oferecer empate", state="normal")
         self.partidaEmAndamento = True
         self.match_id = message.match_id
-        print("RECEBEU PARTIDA")
         initialPosition = message.position
         if initialPosition == 1:
-            print('position 1')
-            pecasLocal: list[Peca] = []
-            pecasRemoto: list[Peca] = []
             for position in self.tabuleiro.positions:
                 if position.ocupante is not None:
-                    peca = position.ocupante
-                    if position.ocupante.getCor() == CorPeca.VERMELHO:
+                    cor = position.getOcupante().getCor()
+                    if cor == CorPeca.VERMELHO:
                         position.getOcupante().setJogador(self.tabuleiro.jogadorLocal)
                         position.getOcupante().getJogador().setNome("Vermelho")
-                        pecasLocal.append(peca)
-                    if position.ocupante.getCor() == CorPeca.PRETO:
+                    if cor == CorPeca.PRETO:
                         position.getOcupante().setJogador(self.tabuleiro.jogadorRemoto)
                         position.getOcupante().getJogador().setNome("Preto")
-                        pecasRemoto.append(peca)
-            self.tabuleiro.jogadorLocal.pecas = pecasLocal
             self.tabuleiro.jogadorLocal.daVez = True
             self.tabuleiro.jogadorLocal.setIdJogador(initialPosition == 1)
-            self.tabuleiro.jogadorRemoto.pecas = pecasRemoto
             self.tabuleiro.jogadorRemoto.daVez = False
             self.tabuleiro.jogadorRemoto.setIdJogador(initialPosition == 0)
         elif initialPosition == 0:
-            print('position 0')
-            pecasRemoto: list[Peca] = []
-            pecasLocal: list[Peca] = []
             for position in self.tabuleiro.positions:
                 if position.ocupante != None:
-                    peca = position.ocupante
                     if position.ocupante.getCor() == CorPeca.VERMELHO:
                         position.getOcupante().setJogador(self.tabuleiro.jogadorRemoto)
                         position.getOcupante().getJogador().setNome("Vermelho")
-                        pecasRemoto.append(peca)
                     if position.ocupante.getCor() == CorPeca.PRETO:
                         position.getOcupante().setJogador(self.tabuleiro.jogadorLocal)
                         position.getOcupante().getJogador().setNome("Preto")
-                        pecasLocal.append(peca)
-            self.tabuleiro.jogadorLocal.pecas = pecasLocal
             self.tabuleiro.jogadorLocal.daVez = False
             self.tabuleiro.jogadorLocal.setIdJogador(initialPosition == 0)
-            self.tabuleiro.jogadorRemoto.pecas = pecasRemoto
             self.tabuleiro.jogadorRemoto.daVez = True
             self.tabuleiro.jogadorRemoto.setIdJogador(initialPosition == 1)
         if self.tabuleiro.jogadorLocal.daVez:
