@@ -8,7 +8,7 @@ from implementacao.StatusPropostaEmpate import StatusPropostaEmpate
 
 
 class Tabuleiro:
-    def __init__(self, tk):
+    def __init__(self):
         super().__init__()
         self.jogadorLocal = Jogador()
         self.jogadorRemoto = Jogador()
@@ -81,9 +81,7 @@ class Tabuleiro:
         if position.ocupante is None:  # Verifica se a posição está vazia
             return possiveis_casas
 
-        peca = position.ocupante
-        linha = position.linha
-        coluna = position.coluna
+        peca = position.getOcupante()
 
         if peca.dama:
             possiveis_casas += self.verificarMovimentosDama(position)
@@ -281,7 +279,7 @@ class Tabuleiro:
             self.appendRodadasSemCaptura()
 
     def getPositionByLinhaColuna(self, linha: int, coluna: int) -> Position:
-        for position in self.positions:
+        for position in self.getPositions():
             if position.linha == linha and position.coluna == coluna:
                 return position
 
@@ -320,22 +318,19 @@ class Tabuleiro:
                 if jogador.pecasEmJogo == 0:
                     self.setStatus(MatchStatus.VENCEDOR)
                     self.setPerdedor(jogador)
-                    print("retornando aqui >> vencedor")
                     return True
                 else:
                     pecasBloqueadas: list[Peca] = []
                     # Rever esse algoritimo
-                    for position in self.positions:
+                    for position in self.getPositions():
                         if position.getOcupante() is not None:
                             if position.getOcupante().getJogador() == jogador:
                                 if self.pecaBloqueada(position):
                                     pecasBloqueadas.append(position.getOcupante())
-                    print("pecasBloqueadas: " + str(len(pecasBloqueadas)))
-                    print("pecasEmJogo: " + str(jogador.pecasEmJogo))
+
                     if len(pecasBloqueadas) == jogador.pecasEmJogo:
                         self.setStatus(MatchStatus.VENCEDOR)
                         self.setPerdedor(jogador)
-                        print("retornando aqui >> pecasBloqueadas")
                         return True
                     else:
                         # if self.rodadasSemCaptura >= 5:
@@ -343,13 +338,13 @@ class Tabuleiro:
                             empate = self.verificarEmpate()
                             if empate:
                                 self.setStatus(MatchStatus.EMPATE)
-                                print("retornando aqui >> empate")
                                 return True
                             else:
-                                print("retornando aqui >> finalElse")
                                 return False
                         else:
                             return False
+            else:
+                pass
 
     def verificarEmpate(self):
         # 2 damas contra 2 damas;
@@ -362,7 +357,8 @@ class Tabuleiro:
             return True
         elif self.jogadorLocal.getDamas() == 2 and self.jogadorRemoto.getDamas() == 1 and self.jogadorRemoto.getPecasEmJogo() == 1:
             return True
-        elif self.jogadorLocal.getDamas() == 1 and self.jogadorRemoto.getDamas() == 1 and self.jogadorLocal.getPecasEmJogo() == 1 and self.jogadorRemoto.getPecasEmJogo() == 1:
+        elif self.jogadorLocal.getDamas() == 1 and self.jogadorRemoto.getDamas() == 1 and \
+                self.jogadorLocal.getPecasEmJogo() == 1 and self.jogadorRemoto.getPecasEmJogo() == 1:
             return True
         else:
             return False
