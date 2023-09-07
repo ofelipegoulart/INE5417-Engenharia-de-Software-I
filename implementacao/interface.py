@@ -1,10 +1,7 @@
 import tkinter as tk
 
-from py_netgames_client.tkinter_client.PyNetgamesServerProxy import PyNetgamesServerProxy
-from py_netgames_client.tkinter_client.PyNetgamesServerListener import PyNetgamesServerListener
 
-
-class ActorPlayer(PyNetgamesServerListener):
+class ActorPlayer():
     def __init__(self, tk):
         super().__init__()
         self.canvas = None
@@ -21,11 +18,8 @@ class ActorPlayer(PyNetgamesServerListener):
         root = self.tk
         menu_bar = tk.Menu(root)
         self.jogo_menu = tk.Menu(menu_bar, tearoff=0)
-        self.jogo_menu.add_command(label="Iniciar", command=self.send_connect)
-        self.jogo_menu.add_command(label="Desistir")
         self.jogo_menu.add_command(label="Oferecer empate")
         self.jogo_menu.add_command(label="Sair", command=self.fechar_janela)
-        self.jogo_menu.entryconfig("Desistir", state="disable")
         self.jogo_menu.entryconfig("Oferecer empate", state="disable")
         menu_bar.add_cascade(label="Jogo", menu=self.jogo_menu)
         root.geometry(f"{WINDOW_WIDTH}x{WINDOW_HEIGHT}")
@@ -61,13 +55,11 @@ class ActorPlayer(PyNetgamesServerListener):
                                            col * SQUARE_SIZE + SQUARE_SIZE - piece_size // 2,
                                            row * SQUARE_SIZE + SQUARE_SIZE - piece_size // 2,
                                            fill="red")
-
-        self.add_listener()
         root.config(menu=menu_bar)
 
         def square_click(event):
-            if not self.partidaEmAndamento:
-                return
+            # if not self.partidaEmAndamento:
+            #     return
             item_id = event.widget.find_closest(event.x, event.y)[0]
             current_color = self.canvas.itemcget(item_id, "fill")
             if current_color == "yellow":
@@ -80,36 +72,3 @@ class ActorPlayer(PyNetgamesServerListener):
 
     def fechar_janela(self):
         self.tk.destroy()
-
-    def add_listener(self):
-        self.server_proxy = PyNetgamesServerProxy()
-        self.server_proxy.add_listener(self)
-
-        self.jogo_menu.entryconfig("Desistir", state="disable")
-        self.jogo_menu.entryconfig("Oferecer empate", state="disable")
-
-    def send_connect(self):
-        self.server_proxy.send_connect("wss://py-netgames-server.fly.dev")
-
-    def receive_connection_success(self):
-        print('**************************CONECTADO********************')
-        self.jogo_menu.entryconfig("Iniciar", state="disable")
-        self.send_match()
-
-    def send_match(self):
-        self.server_proxy.send_match(2)
-
-    def receive_disconnect(self):
-        pass
-
-    def receive_error(self, error: Exception):
-        pass
-
-    def receive_match(self, match):
-        self.jogo_menu.entryconfig("Desistir", state="normal")
-        self.jogo_menu.entryconfig("Oferecer empate", state="normal")
-        self.partidaEmAndamento = True
-        print("RECEBEU PARTIDA")
-
-    def receive_move(self, move):
-        pass
