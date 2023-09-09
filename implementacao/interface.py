@@ -58,6 +58,10 @@ class ActorPlayer():
         root.config(menu=menu_bar)
 
         def square_click(event):
+            print("click:")
+            print("casa x: " + str(event.x))
+            print("casa y: " + str(event.y))
+            print("-------------------------------------")
             # if not self.partidaEmAndamento:
             #     return
             item_id = event.widget.find_closest(event.x, event.y)[0]
