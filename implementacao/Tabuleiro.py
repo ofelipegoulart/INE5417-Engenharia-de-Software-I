@@ -90,6 +90,21 @@ class Tabuleiro:
 
         return possiveis_casas
 
+    def verificarPossiveisCasas(self, position: Position):
+        possiveis_casas = []
+
+        if position.ocupante is None:  # Verifica se a posição está vazia
+            return possiveis_casas
+
+        peca = position.getOcupante()
+
+        if peca.dama:
+            possiveis_casas += self.verificarMovimentosDama(position)
+        else:
+            possiveis_casas += self.verificarMovimentosPeao(position)
+
+        return possiveis_casas
+
     def verificarMovimentosPeao(self, position: Position):
         possiveis_casas = []
         peca = position.ocupante
@@ -110,10 +125,10 @@ class Tabuleiro:
         nova_coluna_esquerda_casa_vazia = coluna - 1
         nova_coluna_direita_casa_vazia = coluna + 1
 
-        if 0 <= nova_linha_casa_vazia <= 7 and 0 <= nova_coluna_esquerda_casa_vazia <= 7:
-            if self.getPositionByLinhaColuna(nova_linha_casa_vazia, nova_coluna_esquerda_casa_vazia).ocupante is None:
-                possiveis_casas.append(
-                    self.getPositionByLinhaColuna(nova_linha_casa_vazia, nova_coluna_esquerda_casa_vazia))
+        if 0 <= nova_linha_casa_vazia <= 7 and 0 <= nova_coluna_esquerda_casa_vazia <= 7 and \
+                self.getPositionByLinhaColuna(nova_linha_casa_vazia, nova_coluna_esquerda_casa_vazia).ocupante is None:
+            possiveis_casas.append(
+                self.getPositionByLinhaColuna(nova_linha_casa_vazia, nova_coluna_esquerda_casa_vazia))
 
         if 0 <= nova_linha_casa_vazia <= 7 and 0 <= nova_coluna_direita_casa_vazia <= 7:
             if self.getPositionByLinhaColuna(nova_linha_casa_vazia, nova_coluna_direita_casa_vazia).ocupante is None:
@@ -129,6 +144,9 @@ class Tabuleiro:
         coluna_esquerda_peca_alvo = coluna - 1
         coluna_direita_peca_alvo = coluna + 1
 
+        capturas = 0
+        ultima_casa_captura = None  # Armazena a última casa de captura múltipla
+
         while True:
             capturou = False
 
@@ -141,9 +159,8 @@ class Tabuleiro:
 
                 # Se há peça inimiga na diagonal esquerda e a peça atras
                 if peca_inimiga is not None and casa_vazia is None and peca_inimiga.getCor() != cor:
-                    # self.pecasCapturadas.append(peca_inimiga)
                     proxima_casa = self.getPositionByLinhaColuna(nova_linha_casa_vazia, nova_coluna_esquerda_casa_vazia)
-                    possiveis_casas.append(proxima_casa)
+                    ultima_casa_captura = proxima_casa
                     capturou = True
 
             if 0 <= nova_linha_casa_vazia <= 7 and 0 <= nova_coluna_direita_casa_vazia <= 7:
@@ -152,9 +169,8 @@ class Tabuleiro:
                                                            nova_coluna_direita_casa_vazia).ocupante
 
                 if peca_inimiga is not None and casa_vazia is None and peca_inimiga.getCor() != cor:
-                    # self.pecasCapturadas.append(peca_inimiga)
                     proxima_casa = self.getPositionByLinhaColuna(nova_linha_casa_vazia, nova_coluna_direita_casa_vazia)
-                    possiveis_casas.append(proxima_casa)
+                    ultima_casa_captura = proxima_casa
                     capturou = True
 
             if not capturou:
@@ -165,7 +181,10 @@ class Tabuleiro:
             nova_coluna_direita_casa_vazia += 2
             linha_peca_alvo += (direcao * 2)
             coluna_esquerda_peca_alvo -= 2
-            coluna_direita_peca_alvo += 2
+
+        # Adiciona apenas a última casa de captura múltipla à lista
+        if ultima_casa_captura is not None:
+            possiveis_casas.append(ultima_casa_captura)
 
         return possiveis_casas
 
