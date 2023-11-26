@@ -24,40 +24,38 @@ class Tabuleiro:
         self.perdedor: Jogador = None
 
     def click(self, linha: int, coluna: int, local_turn: bool) -> bool:
-        # Verifica se o clique foi em linha e coluna
-        if linha is not None and coluna is not None:
-            # Verifica se é a vez do jogador
-            temJogada = False
-            if local_turn:
-                # Pega a posição que foi clicada
-                positionClicada = self.getPositionByLinhaColuna(
-                    linha, coluna)
+        # Verifica se é a vez do jogador
+        temJogada = False
+        if local_turn:
+            # Pega a posição que foi clicada
+            positionClicada = self.getPositionByLinhaColuna(
+                linha, coluna)
 
-                # Verifica se existe uma peça já selecionada
-                if self.pecaClicada is None:
-                    casaEhValida = self.verificarCasa(positionClicada)
-                    if casaEhValida:
-                        jogadas = self.verificarPossiveisCasas(
-                            positionClicada)
-                        self.jogadas = jogadas
-                        self.setPecaClicada(positionClicada)
-                        return temJogada
-                    elif not casaEhValida:
-                        self.errorLocalMessage = "Casa inválida para jogada"
-                        return temJogada
-
-                # Caso já haja, ele tenta validar a jogada
-                elif self.pecaClicada is not None:
-                    for position in self.jogadas:
-                        if position.coluna == positionClicada.coluna and position.linha == positionClicada.linha:
-                            temJogada = True
-                            return temJogada
-                    self.pecaClicada = None
-                    self.errorLocalMessage = "Casa inválida para jogada (segundo clique)"
+            # Verifica se existe uma peça já selecionada
+            if self.pecaClicada is None:
+                casaEhValida = self.verificarCasa(positionClicada)
+                if casaEhValida:
+                    jogadas = self.verificarPossiveisCasas(
+                        positionClicada)
+                    self.jogadas = jogadas
+                    self.setPecaClicada(positionClicada)
                     return temJogada
-            elif not local_turn:
-                self.errorLocalMessage = "Não é seu turno"
+                elif not casaEhValida:
+                    self.errorLocalMessage = "Casa inválida para jogada"
+                    return temJogada
+
+            # Caso já haja, ele tenta validar a jogada
+            elif self.pecaClicada is not None:
+                for position in self.jogadas:
+                    if position.coluna == positionClicada.coluna and position.linha == positionClicada.linha:
+                        temJogada = True
+                        return temJogada
+                self.pecaClicada = None
+                self.errorLocalMessage = "Casa inválida para jogada (segundo clique)"
                 return temJogada
+        elif not local_turn:
+            self.errorLocalMessage = "Não é seu turno"
+            return temJogada
 
     def verificarPossiveisCasas(self, position: Position):
         possiveis_casas = []
@@ -275,7 +273,6 @@ class Tabuleiro:
                     # self.zerarRodadasSemCaptura()
         if len(pecasCapturadasNaRodada) != 0:
             for peca in pecasCapturadasNaRodada:
-                print("Jogador " + peca.jogador.nome + " perdeu uma peça")
                 peca.jogador.diminuirPecasEmJogo(peca.dama)
             self.zerarRodadasSemCaptura()
         else:
@@ -336,7 +333,6 @@ class Tabuleiro:
                         self.setPerdedor(jogador)
                         return True
                     else:
-                        print(self.rodadasSemCaptura)
                         if self.rodadasSemCaptura == 10:
                             empate = self.verificarEmpate()
                             if empate:
