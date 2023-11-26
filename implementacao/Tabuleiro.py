@@ -4,7 +4,6 @@ from implementacao.Jogador import Jogador
 from implementacao.MatchStatus import MatchStatus
 from implementacao.Peca import Peca
 from implementacao.Position import Position
-from implementacao.StatusPropostaEmpate import StatusPropostaEmpate
 
 
 class Tabuleiro:
@@ -23,57 +22,44 @@ class Tabuleiro:
         self.errorLocalMessage = None
         self.pecasCapturadas: list[Peca] = []
         self.perdedor: Jogador = None
-        self.statusPropostaEmpate: StatusPropostaEmpate = StatusPropostaEmpate.SEM_PROPOSTA
 
-    def click(self, linha: int, coluna: int, local_turn: bool, aceitaPropostaEmpate: bool or None) -> bool:
-        proposta_empate = self.get_proposta_empate()
+    def click(self, linha: int, coluna: int, local_turn: bool) -> bool:
+        # Verifica se o clique foi em linha e coluna
+        if linha is not None and coluna is not None:
+            # Verifica se é a vez do jogador
+            if local_turn:
+                # Pega a posição que foi clicada
+                positionClicada = self.getPositionByLinhaColuna(
+                    linha, coluna)
 
-        # Verifica se há uma proposta de empate
-        if not proposta_empate:
-            # Verifica se o clique foi em linha e coluna ao invés de oferecer empate
-            if linha is not None and coluna is not None:
-                # Verifica se é a vez do jogador
-                if local_turn:
-                    # Pega a posição que foi clicada
-                    positionClicada = self.getPositionByLinhaColuna(
-                        linha, coluna)
-
-                    # Verifica se existe uma peça já selecionada
-                    if self.pecaClicada is None:
-                        casaEhValida = self.verificarCasa(positionClicada)
-                        if casaEhValida:
-                            jogadas = self.verificarPossiveisCasas(
-                                positionClicada)
-                            self.jogadas = jogadas
-                            self.setPecaClicada(positionClicada)
-                            return False
-                        elif not casaEhValida:
-                            self.errorLocalMessage = "Casa inválida para jogada"
-                            return False
-
-                    # Caso já haja, ele tenta validar a jogada
-                    elif self.pecaClicada is not None:
-                        for position in self.jogadas:
-                            if position.coluna == positionClicada.coluna and position.linha == positionClicada.linha:
-                                return True
-                        self.pecaClicada = None
-                        self.errorLocalMessage = "Casa inválida para jogada (segundo clique)"
+                # Verifica se existe uma peça já selecionada
+                if self.pecaClicada is None:
+                    casaEhValida = self.verificarCasa(positionClicada)
+                    if casaEhValida:
+                        jogadas = self.verificarPossiveisCasas(
+                            positionClicada)
+                        self.jogadas = jogadas
+                        self.setPecaClicada(positionClicada)
+                        return False
+                    elif not casaEhValida:
+                        self.errorLocalMessage = "Casa inválida para jogada"
                         return False
 
-                elif not local_turn:
-                    self.errorLocalMessage = "Não é seu turno"
+                # Caso já haja, ele tenta validar a jogada
+                elif self.pecaClicada is not None:
+                    for position in self.jogadas:
+                        if position.coluna == positionClicada.coluna and position.linha == positionClicada.linha:
+                            return True
+                    self.pecaClicada = None
+                    self.errorLocalMessage = "Casa inválida para jogada (segundo clique)"
                     return False
-            elif coluna is None and linha is None:
-                self.set_proposta_empate(True)
-                self.statusPropostaEmpate = StatusPropostaEmpate.LOCAL_ENVIOU
-                return True
-        elif self.get_proposta_empate():
-            if aceitaPropostaEmpate:
-                self.statusPropostaEmpate = StatusPropostaEmpate.LOCAL_ACEITOU
-                return True
-            elif not aceitaPropostaEmpate:
-                self.statusPropostaEmpate = StatusPropostaEmpate.SEM_PROPOSTA
-                return True
+
+            elif not local_turn:
+                self.errorLocalMessage = "Não é seu turno"
+                return False
+        elif coluna is None and linha is None:
+            self.set_proposta_empate(True)
+            return True
 
     def verificarPossiveisCasas(self, position: Position):
         possiveis_casas = []
@@ -352,7 +338,7 @@ class Tabuleiro:
                         self.setPerdedor(jogador)
                         return True
                     else:
-                        # if self.rodadasSemCaptura >= 5:
+                        print(self.rodadasSemCaptura)
                         if self.rodadasSemCaptura == 10:
                             empate = self.verificarEmpate()
                             if empate:
@@ -417,12 +403,6 @@ class Tabuleiro:
 
     def setPecaClicada(self, pecaClicada: Position):
         self.pecaClicada = pecaClicada
-
-    def set_proposta_empate(self, proposta_empate: bool):
-        self.proposta_empate = proposta_empate
-
-    def get_proposta_empate(self):
-        return self.proposta_empate
 
     def getPecasCapturadas(self):
         return self.pecasCapturadas

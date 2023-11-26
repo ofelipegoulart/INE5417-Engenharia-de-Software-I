@@ -9,8 +9,6 @@ from implementacao.MatchStatus import MatchStatus
 from implementacao.Peca import Peca
 from implementacao.Position import Position
 from tkinter import messagebox
-
-from implementacao.StatusPropostaEmpate import StatusPropostaEmpate
 from implementacao.Tabuleiro import Tabuleiro
 import jsonpickle
 
@@ -87,13 +85,8 @@ class ActorPlayer(PyNetgamesServerListener):
         self.send_connect()
         root.mainloop()
 
-    def oferecerEmpate(self):
-        self.square_click(None)
-
     def adiciona_comandos(self):
-        self.jogo_menu.add_command(label="Oferecer empate", command=self.oferecerEmpate)
         self.jogo_menu.add_command(label="Sair", command=self.fechar_janela)
-        self.jogo_menu.entryconfig("Oferecer empate", state="disable")
 
     # @trace_to_puml
     def square_click(self, event, aceitaPropostaEmpate=None):
@@ -111,8 +104,7 @@ class ActorPlayer(PyNetgamesServerListener):
 
         # Imprime a linha e a coluna
         temJogada = self.tabuleiro.click(
-            linha=row, coluna=col, local_turn=self.tabuleiro.jogadorLocal.daVez,
-            aceitaPropostaEmpate=aceitaPropostaEmpate)
+            linha=row, coluna=col, local_turn=self.tabuleiro.jogadorLocal.daVez)
         if not temJogada and self.tabuleiro.pecaClicada is None:
             self.montarPositcoes()
             self.exibir_notificacao(self.tabuleiro.errorLocalMessage)
@@ -130,35 +122,19 @@ class ActorPlayer(PyNetgamesServerListener):
                 linha=row, coluna=col)
             move = {"move": {"positionInicial": jsonpickle.encode(posInicial),
                              "positionFinal": jsonpickle.encode(posFinal),
-                             "capturas": jsonpickle.encode(self.tabuleiro.pecasCapturadas),
-                             "propostaEmpate": jsonpickle.encode(self.tabuleiro.get_proposta_empate()),
-                             "statusPropostaEmpate": jsonpickle.encode(self.tabuleiro.statusPropostaEmpate)}}
+                             "capturas": jsonpickle.encode(self.tabuleiro.pecasCapturadas)}}
             status = self.realizarLance(
                 positionInicial=posInicial, positionFinal=posFinal)
             # Verifica se esta recusando uma proposta de empate
             if self.tabuleiro.get_proposta_empate() or posInicial is None:
                 move = {"move": {"positionInicial": jsonpickle.encode(posInicial),
                                  "positionFinal": jsonpickle.encode(posFinal),
-                                 "capturas": jsonpickle.encode(self.tabuleiro.pecasCapturadas),
-                                 "propostaEmpate": jsonpickle.encode(self.tabuleiro.get_proposta_empate()),
-                                 "statusPropostaEmpate": jsonpickle.encode(self.tabuleiro.statusPropostaEmpate)}}
+                                 "capturas": jsonpickle.encode(self.tabuleiro.pecasCapturadas)}}
             self.tabuleiro.setPecaClicada(None)
             self.server_proxy.send_move(self.match_id, payload=move)
 
-    def aceitarProposta(self, event):
-        self.square_click(event=None, aceitaPropostaEmpate=True)
-
-    def recusarProposta(self, event):
-        self.square_click(None, False)
-
     def montarPositcoes(self):
-        if self.tabuleiro.match_status == MatchStatus.EMPATE:
-            self.canvas.delete("all")  # Limpa todos os elementos do Canvas
-            self.canvas.config(bg="white")  # Define o fundo como branco
-            self.canvas.create_text(200, 200,
-                                    text="Partida empatada! Reinicie a aplicação")  # Cria um texto centralizado
-            self.canvas.bind("<Button-1>", self.fechar_janela)
-        elif self.tabuleiro.match_status == MatchStatus.VENCEDOR:
+        if self.tabuleiro.match_status == MatchStatus.VENCEDOR:
             print(self.tabuleiro.perdedor.getIdJogador())
             print(self.tabuleiro.jogadorLocal.getIdJogador())
             playerVencedor = self.tabuleiro.jogadorLocal if \
@@ -171,27 +147,7 @@ class ActorPlayer(PyNetgamesServerListener):
             self.canvas.create_text(200, 200,
                                     text=texto_vencedor_player + texto_vencedor)  # Cria um texto centralizado
             self.canvas.bind("<Button-1>", self.fechar_janela)
-            # for jogador in self.tabuleiro.getPlayers():
-            #     if jogador.getVencedor() != False
-
-        elif self.tabuleiro.get_proposta_empate():
-            self.jogo_menu.entryconfig("Oferecer empate", state="disable")
-            if self.tabuleiro.statusPropostaEmpate == StatusPropostaEmpate.LOCAL_ENVIOU:
-                self.canvas.delete("all")  # Limpa todos os elementos do Canvas
-                self.canvas.config(bg="white")  # Define o fundo como branco
-                self.canvas.create_text(200, 200, text="Aguardando resposta da proposta de empate")
-            elif self.tabuleiro.statusPropostaEmpate == StatusPropostaEmpate.REMOTO_ENVIOU:
-                self.canvas.delete("all")  # Limpa todos os elementos do Canvas
-                self.canvas.config(bg="white")  # Define o fundo como branco
-                self.canvas.create_text(200, 200, text="Aceitar proposta de empate?")
-                sim = self.canvas.create_text(100, 200, text="Sim", fill="green")
-                nao = self.canvas.create_text(50, 200, text="Não", fill="red")
-                self.canvas.tag_bind(sim, "<Button-1>", self.aceitarProposta)
-                self.canvas.tag_bind(nao, "<Button-1>", self.recusarProposta)
         else:
-            # if self.tabuleiro.jogadorLocal is not None:
-            #     if not self.tabuleiro.jogadorLocal.daVez():
-            #         self.jogo_menu.entryconfig("Oferecer empate", state="disabled")
             self.canvas.delete("all")  # Limpa todos os elementos do Canvas
             for position in self.tabuleiro.getPositions():
                 x1 = position.getColuna() * self.SQUARE_SIZE
@@ -249,62 +205,30 @@ class ActorPlayer(PyNetgamesServerListener):
         self.tk.destroy()
 
     def realizarLance(self, positionInicial: Position, positionFinal: Position):
-        if not self.tabuleiro.get_proposta_empate():
-            if positionInicial is not None:
-                position = self.tabuleiro.getPositionByLinhaColuna(
-                    positionFinal.getLinha(), positionFinal.getColuna())
-                posInitial = self.tabuleiro.getPositionByLinhaColuna(
-                    positionInicial.getLinha(), positionInicial.getColuna())
-                # identifica se teve captura
-                # Verifica se a casa selecionada é uma ponta do tabuleiro
-                if (positionFinal.getLinha() == 0 and posInitial.getOcupante().getCor() == CorPeca.VERMELHO) or (
-                        positionFinal.getLinha() == 7 and posInitial.getOcupante().getCor() == CorPeca.PRETO):
-                    posInitial.getOcupante().setDama(True)
-                    # Transforma peça em dama
-                position.setOcupante(positionInicial.getOcupante())
-                self.tabuleiro.verificaCapturas(positionInicial, positionFinal, positionInicial.getOcupante().getCor())
-                self.tabuleiro.removerPecas()
-                posInitial.setOcupante(None)
-                partidaEncerrada = self.tabuleiro.avaliarEncerramento()
-                if not partidaEncerrada:
-                    self.tabuleiro.trocarTurnos()
-                    if self.tabuleiro.jogadorLocal.daVez:
-                        self.jogo_menu.entryconfig("Oferecer empate", state="normal")
-                    else:
-                        self.jogo_menu.entryconfig("Oferecer empate", state="disable")
-                self.montarPositcoes()
-                return self.tabuleiro.match_status
-            # Proposta de empate recusada
-            else:
-                if self.tabuleiro.jogadorLocal.daVez:
-                    self.jogo_menu.entryconfig("Oferecer empate", state="normal")
-                else:
-                    self.jogo_menu.entryconfig("Oferecer empate", state="disable")
-                # self.tabuleiro.trocarTurnos()
-                self.montarPositcoes()
-        elif self.tabuleiro.get_proposta_empate():
-            if self.tabuleiro.statusPropostaEmpate == StatusPropostaEmpate.LOCAL_ACEITOU or \
-                    self.tabuleiro.statusPropostaEmpate == StatusPropostaEmpate.REMOTO_ACEITOU:
-                print("Chegando aqui >> proposta de empate aceita")
-                self.tabuleiro.setStatus(MatchStatus.EMPATE)
-                self.montarPositcoes()
-                return MatchStatus.EMPATE
-            else:
-                if self.tabuleiro.statusPropostaEmpate == StatusPropostaEmpate.LOCAL_ENVIOU or \
-                        self.tabuleiro.statusPropostaEmpate == StatusPropostaEmpate.REMOTO_ENVIOU:
-                    self.tabuleiro.setStatus(MatchStatus.EM_ANDAMENTO)
-                    self.montarPositcoes()
-                    return MatchStatus.EM_ANDAMENTO
-                else:
-                    self.tabuleiro.set_proposta_empate(False)
-                    self.tabuleiro.statusPropostaEmpate = StatusPropostaEmpate.SEM_PROPOSTA
-                    self.montarPositcoes()
-                    return MatchStatus.EM_ANDAMENTO
+        if positionInicial is not None:
+            position = self.tabuleiro.getPositionByLinhaColuna(
+                positionFinal.getLinha(), positionFinal.getColuna())
+            posInitial = self.tabuleiro.getPositionByLinhaColuna(
+                positionInicial.getLinha(), positionInicial.getColuna())
+            # identifica se teve captura
+            # Verifica se a casa selecionada é uma ponta do tabuleiro
+            if (positionFinal.getLinha() == 0 and posInitial.getOcupante().getCor() == CorPeca.VERMELHO) or (
+                    positionFinal.getLinha() == 7 and posInitial.getOcupante().getCor() == CorPeca.PRETO):
+                posInitial.getOcupante().setDama(True)
+                # Transforma peça em dama
+            position.setOcupante(positionInicial.getOcupante())
+            self.tabuleiro.verificaCapturas(positionInicial, positionFinal, positionInicial.getOcupante().getCor())
+            self.tabuleiro.removerPecas()
+            posInitial.setOcupante(None)
+            partidaEncerrada = self.tabuleiro.avaliarEncerramento()
+            if not partidaEncerrada:
+                self.tabuleiro.trocarTurnos()
+            self.montarPositcoes()
+            return self.tabuleiro.match_status
 
     def add_listener(self):
         self.server_proxy = PyNetgamesServerProxy()
         self.server_proxy.add_listener(self)
-        self.jogo_menu.entryconfig("Oferecer empate", state="disable")
 
     def send_connect(self):
         self.server_proxy.send_connect("wss://py-netgames-server.fly.dev")
@@ -355,37 +279,8 @@ class ActorPlayer(PyNetgamesServerListener):
             self.tabuleiro.jogadorLocal.setIdJogador(initialPosition == 0)
             self.tabuleiro.jogadorRemoto.daVez = True
             self.tabuleiro.jogadorRemoto.setIdJogador(initialPosition == 1)
-        if self.tabuleiro.jogadorLocal.daVez:
-            self.jogo_menu.entryconfig("Oferecer empate", state="normal")
-        else:
-            self.jogo_menu.entryconfig("Oferecer empate", state="disable")
-
-        # for jogador in self.tabuleiro.getPlayers():
-        #     if jogador.daVez == False:
-
-        # for peca in self.tabuleiro.jogadorLocal.pecas:
-        #     # if position.ocupante is not None:
-
     def receive_move(self, move: MoveMessage):
-        positionInitial = jsonpickle.decode(
-            move.payload.get("move").get("positionInicial"))
-
-        positionFinal = jsonpickle.decode(
-            move.payload.get("move").get("positionFinal"))
-        self.tabuleiro.pecasCapturadas = jsonpickle.decode(
-            move.payload.get("move").get("capturas"))
-        propostaEmpate = jsonpickle.decode(move.payload.get("move").get("propostaEmpate"))
-        statusPropostaEmpate = jsonpickle.decode(move.payload.get("move").get("statusPropostaEmpate"))
-        if propostaEmpate:
-            self.tabuleiro.set_proposta_empate(True)
-            if statusPropostaEmpate == StatusPropostaEmpate.LOCAL_ENVIOU:
-                self.tabuleiro.statusPropostaEmpate = StatusPropostaEmpate.REMOTO_ENVIOU
-            if statusPropostaEmpate == StatusPropostaEmpate.LOCAL_ACEITOU:
-                self.tabuleiro.statusPropostaEmpate = StatusPropostaEmpate.REMOTO_ACEITOU
-            self.realizarLance(positionInicial=positionInitial,
-                               positionFinal=positionFinal)
-        else:
-            self.tabuleiro.set_proposta_empate(False)
-            self.tabuleiro.statusPropostaEmpate = StatusPropostaEmpate.SEM_PROPOSTA
-            self.realizarLance(positionInicial=positionInitial,
-                               positionFinal=positionFinal)
+        positionInitial = jsonpickle.decode(move.payload.get("move").get("positionInicial"))
+        positionFinal = jsonpickle.decode(move.payload.get("move").get("positionFinal"))
+        self.tabuleiro.pecasCapturadas = jsonpickle.decode(move.payload.get("move").get("capturas"))
+        self.realizarLance(positionInicial=positionInitial, positionFinal=positionFinal)
