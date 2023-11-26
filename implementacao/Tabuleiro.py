@@ -27,6 +27,7 @@ class Tabuleiro:
         # Verifica se o clique foi em linha e coluna
         if linha is not None and coluna is not None:
             # Verifica se é a vez do jogador
+            temJogada = False
             if local_turn:
                 # Pega a posição que foi clicada
                 positionClicada = self.getPositionByLinhaColuna(
@@ -40,26 +41,23 @@ class Tabuleiro:
                             positionClicada)
                         self.jogadas = jogadas
                         self.setPecaClicada(positionClicada)
-                        return False
+                        return temJogada
                     elif not casaEhValida:
                         self.errorLocalMessage = "Casa inválida para jogada"
-                        return False
+                        return temJogada
 
                 # Caso já haja, ele tenta validar a jogada
                 elif self.pecaClicada is not None:
                     for position in self.jogadas:
                         if position.coluna == positionClicada.coluna and position.linha == positionClicada.linha:
-                            return True
+                            temJogada = True
+                            return temJogada
                     self.pecaClicada = None
                     self.errorLocalMessage = "Casa inválida para jogada (segundo clique)"
-                    return False
-
+                    return temJogada
             elif not local_turn:
                 self.errorLocalMessage = "Não é seu turno"
-                return False
-        elif coluna is None and linha is None:
-            self.set_proposta_empate(True)
-            return True
+                return temJogada
 
     def verificarPossiveisCasas(self, position: Position):
         possiveis_casas = []

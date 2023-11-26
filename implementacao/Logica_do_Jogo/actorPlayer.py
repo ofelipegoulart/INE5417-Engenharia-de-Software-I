@@ -105,11 +105,13 @@ class ActorPlayer(PyNetgamesServerListener):
         # Imprime a linha e a coluna
         temJogada = self.tabuleiro.click(
             linha=row, coluna=col, local_turn=self.tabuleiro.jogadorLocal.daVez)
-        if not temJogada and self.tabuleiro.pecaClicada is None:
+        pecaClicada = self.tabuleiro.getPecaClicada()
+        if not temJogada and pecaClicada is None:
             self.montarPositcoes()
             self.exibir_notificacao(self.tabuleiro.errorLocalMessage)
-        elif not temJogada and self.tabuleiro.pecaClicada is not None:
-            for jogada in self.tabuleiro.getJogadas():
+        elif not temJogada and pecaClicada is not None:
+            jogadas = self.tabuleiro.getJogadas()
+            for jogada in jogadas:
                 rectangle = self.retangulos.get(
                     (jogada.getLinha(), jogada.getColuna()))
                 if rectangle is not None:
@@ -125,16 +127,16 @@ class ActorPlayer(PyNetgamesServerListener):
                              "capturas": jsonpickle.encode(self.tabuleiro.pecasCapturadas)}}
             status = self.realizarLance(
                 positionInicial=posInicial, positionFinal=posFinal)
-            # Verifica se esta recusando uma proposta de empate
-            if self.tabuleiro.get_proposta_empate() or posInicial is None:
-                move = {"move": {"positionInicial": jsonpickle.encode(posInicial),
-                                 "positionFinal": jsonpickle.encode(posFinal),
-                                 "capturas": jsonpickle.encode(self.tabuleiro.pecasCapturadas)}}
             self.tabuleiro.setPecaClicada(None)
             self.server_proxy.send_move(self.match_id, payload=move)
 
     def montarPositcoes(self):
-        if self.tabuleiro.match_status == MatchStatus.VENCEDOR:
+        if self.tabuleiro.match_status == MatchStatus.EMPATE:
+            self.canvas.delete("all")  # Limpa todos os elementos do Canvas
+            self.canvas.config(bg="white")  # Define o fundo como branco
+            self.canvas.create_text(200, 200, text = "Partida empatada! Reinicie a aplicação")
+            self.canvas.bind("<Button-1>", self.fechar_janela)
+        elif self.tabuleiro.match_status == MatchStatus.VENCEDOR:
             print(self.tabuleiro.perdedor.getIdJogador())
             print(self.tabuleiro.jogadorLocal.getIdJogador())
             playerVencedor = self.tabuleiro.jogadorLocal if \
