@@ -203,18 +203,22 @@ class ActorPlayer(PyNetgamesServerListener):
     def fechar_janela(self, event=None):
         self.tk.destroy()
 
+    def get_condition_of_dama(self, posInitial, positionFinal):
+        return (positionFinal.getLinha() == 0 and posInitial.getOcupante().getCor() == CorPeca.VERMELHO) or (
+                positionFinal.getLinha() == 7 and posInitial.getOcupante().getCor() == CorPeca.PRETO)
+
     def realizarLance(self, positionInicial: Position, positionFinal: Position):
         if positionInicial is not None:
             position = self.tabuleiro.getPositionByLinhaColuna(
                 positionFinal.getLinha(), positionFinal.getColuna())
             posInitial = self.tabuleiro.getPositionByLinhaColuna(
                 positionInicial.getLinha(), positionInicial.getColuna())
-            # identifica se teve captura
             # Verifica se a casa selecionada é uma ponta do tabuleiro
-            if (positionFinal.getLinha() == 0 and posInitial.getOcupante().getCor() == CorPeca.VERMELHO) or (
-                    positionFinal.getLinha() == 7 and posInitial.getOcupante().getCor() == CorPeca.PRETO):
-                posInitial.getOcupante().setDama(True)
+            isDamaCondition = self.get_condition_of_dama( posInitial, positionFinal)
+            if isDamaCondition:
                 # Transforma peça em dama
+                posInitial.getOcupante().setDama(True)
+            # identifica se teve captura
             position.setOcupante(positionInicial.getOcupante())
             self.tabuleiro.verificaCapturas(positionInicial, positionFinal, positionInicial.getOcupante().getCor())
             self.tabuleiro.removerPecas()
