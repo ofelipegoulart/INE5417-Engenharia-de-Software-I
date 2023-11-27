@@ -4,7 +4,6 @@ from implementacao.Jogador import Jogador
 from implementacao.MatchStatus import MatchStatus
 from implementacao.Peca import Peca
 from implementacao.Position import Position
-from implementacao.StatusPropostaEmpate import StatusPropostaEmpate
 
 
 class Tabuleiro:
@@ -23,57 +22,55 @@ class Tabuleiro:
         self.errorLocalMessage = None
         self.pecasCapturadas: list[Peca] = []
         self.perdedor: Jogador = None
-        self.statusPropostaEmpate: StatusPropostaEmpate = StatusPropostaEmpate.SEM_PROPOSTA
 
-    def click(self, linha: int, coluna: int, local_turn: bool, aceitaPropostaEmpate: bool or None) -> bool:
-        proposta_empate = self.get_proposta_empate()
+    def click(self, linha: int, coluna: int, local_turn: bool) -> bool:
+        # Verifica se é a vez do jogador
+        temJogada = False
+        if local_turn:
+            # Pega a posição que foi clicada
+            positionClicada = self.getPositionByLinhaColuna(
+                linha, coluna)
 
-        # Verifica se há uma proposta de empate
-        if not proposta_empate:
-            # Verifica se o clique foi em linha e coluna ao invés de oferecer empate
-            if linha is not None and coluna is not None:
-                # Verifica se é a vez do jogador
-                if local_turn:
-                    # Pega a posição que foi clicada
-                    positionClicada = self.getPositionByLinhaColuna(
-                        linha, coluna)
+            # Verifica se existe uma peça já selecionada
+            if self.pecaClicada is None:
+                casaEhValida = self.verificarCasa(positionClicada)
+                if casaEhValida:
+                    jogadas = self.verificarPossiveisCasas(
+                        positionClicada)
+                    self.jogadas = jogadas
+                    self.setPecaClicada(positionClicada)
+                    return temJogada
+                elif not casaEhValida:
+                    self.errorLocalMessage = "Casa inválida para jogada"
+                    return temJogada
 
-                    # Verifica se existe uma peça já selecionada
-                    if self.pecaClicada is None:
-                        casaEhValida = self.verificarCasa(positionClicada)
-                        if casaEhValida:
-                            jogadas = self.verificarPossiveisCasas(
-                                positionClicada)
-                            self.jogadas = jogadas
-                            self.setPecaClicada(positionClicada)
-                            return False
-                        elif not casaEhValida:
-                            self.errorLocalMessage = "Casa inválida para jogada"
-                            return False
+            # Caso já haja, ele tenta validar a jogada
+            elif self.pecaClicada is not None:
+                for position in self.jogadas:
+                    if position.coluna == positionClicada.coluna and position.linha == positionClicada.linha:
+                        temJogada = True
+                        return temJogada
+                self.pecaClicada = None
+                self.errorLocalMessage = "Casa inválida para jogada (segundo clique)"
+                return temJogada
+        elif not local_turn:
+            self.errorLocalMessage = "Não é seu turno"
+            return temJogada
 
-                    # Caso já haja, ele tenta validar a jogada
-                    elif self.pecaClicada is not None:
-                        for position in self.jogadas:
-                            if position.coluna == positionClicada.coluna and position.linha == positionClicada.linha:
-                                return True
-                        self.pecaClicada = None
-                        self.errorLocalMessage = "Casa inválida para jogada (segundo clique)"
-                        return False
+    def verificarPossiveisCasas(self, position: Position):
+        possiveis_casas = []
 
-                elif not local_turn:
-                    self.errorLocalMessage = "Não é seu turno"
-                    return False
-            elif coluna is None and linha is None:
-                self.set_proposta_empate(True)
-                self.statusPropostaEmpate = StatusPropostaEmpate.LOCAL_ENVIOU
-                return True
-        elif self.get_proposta_empate():
-            if aceitaPropostaEmpate:
-                self.statusPropostaEmpate = StatusPropostaEmpate.LOCAL_ACEITOU
-                return True
-            elif not aceitaPropostaEmpate:
-                self.statusPropostaEmpate = StatusPropostaEmpate.SEM_PROPOSTA
-                return True
+        if position.ocupante is None:  # Verifica se a posição está vazia
+            return possiveis_casas
+
+        peca = position.getOcupante()
+
+        if peca.dama:
+            possiveis_casas += self.verificarMovimentosDama(position)
+        else:
+            possiveis_casas += self.verificarMovimentosPeao(position)
+
+        return possiveis_casas
 
     def verificarPossiveisCasas(self, position: Position):
         possiveis_casas = []
@@ -110,10 +107,10 @@ class Tabuleiro:
         nova_coluna_esquerda_casa_vazia = coluna - 1
         nova_coluna_direita_casa_vazia = coluna + 1
 
-        if 0 <= nova_linha_casa_vazia <= 7 and 0 <= nova_coluna_esquerda_casa_vazia <= 7:
-            if self.getPositionByLinhaColuna(nova_linha_casa_vazia, nova_coluna_esquerda_casa_vazia).ocupante is None:
-                possiveis_casas.append(
-                    self.getPositionByLinhaColuna(nova_linha_casa_vazia, nova_coluna_esquerda_casa_vazia))
+        if 0 <= nova_linha_casa_vazia <= 7 and 0 <= nova_coluna_esquerda_casa_vazia <= 7 and \
+                self.getPositionByLinhaColuna(nova_linha_casa_vazia, nova_coluna_esquerda_casa_vazia).ocupante is None:
+            possiveis_casas.append(
+                self.getPositionByLinhaColuna(nova_linha_casa_vazia, nova_coluna_esquerda_casa_vazia))
 
         if 0 <= nova_linha_casa_vazia <= 7 and 0 <= nova_coluna_direita_casa_vazia <= 7:
             if self.getPositionByLinhaColuna(nova_linha_casa_vazia, nova_coluna_direita_casa_vazia).ocupante is None:
@@ -129,6 +126,9 @@ class Tabuleiro:
         coluna_esquerda_peca_alvo = coluna - 1
         coluna_direita_peca_alvo = coluna + 1
 
+        capturas = 0
+        ultima_casa_captura = None  # Armazena a última casa de captura múltipla
+
         while True:
             capturou = False
 
@@ -141,9 +141,8 @@ class Tabuleiro:
 
                 # Se há peça inimiga na diagonal esquerda e a peça atras
                 if peca_inimiga is not None and casa_vazia is None and peca_inimiga.getCor() != cor:
-                    # self.pecasCapturadas.append(peca_inimiga)
                     proxima_casa = self.getPositionByLinhaColuna(nova_linha_casa_vazia, nova_coluna_esquerda_casa_vazia)
-                    possiveis_casas.append(proxima_casa)
+                    ultima_casa_captura = proxima_casa
                     capturou = True
 
             if 0 <= nova_linha_casa_vazia <= 7 and 0 <= nova_coluna_direita_casa_vazia <= 7:
@@ -152,9 +151,8 @@ class Tabuleiro:
                                                            nova_coluna_direita_casa_vazia).ocupante
 
                 if peca_inimiga is not None and casa_vazia is None and peca_inimiga.getCor() != cor:
-                    # self.pecasCapturadas.append(peca_inimiga)
                     proxima_casa = self.getPositionByLinhaColuna(nova_linha_casa_vazia, nova_coluna_direita_casa_vazia)
-                    possiveis_casas.append(proxima_casa)
+                    ultima_casa_captura = proxima_casa
                     capturou = True
 
             if not capturou:
@@ -165,7 +163,10 @@ class Tabuleiro:
             nova_coluna_direita_casa_vazia += 2
             linha_peca_alvo += (direcao * 2)
             coluna_esquerda_peca_alvo -= 2
-            coluna_direita_peca_alvo += 2
+
+        # Adiciona apenas a última casa de captura múltipla à lista
+        if ultima_casa_captura is not None:
+            possiveis_casas.append(ultima_casa_captura)
 
         return possiveis_casas
 
@@ -272,7 +273,6 @@ class Tabuleiro:
                     # self.zerarRodadasSemCaptura()
         if len(pecasCapturadasNaRodada) != 0:
             for peca in pecasCapturadasNaRodada:
-                print("Jogador " + peca.jogador.nome + " perdeu uma peça")
                 peca.jogador.diminuirPecasEmJogo(peca.dama)
             self.zerarRodadasSemCaptura()
         else:
@@ -333,7 +333,6 @@ class Tabuleiro:
                         self.setPerdedor(jogador)
                         return True
                     else:
-                        # if self.rodadasSemCaptura >= 5:
                         if self.rodadasSemCaptura == 10:
                             empate = self.verificarEmpate()
                             if empate:
@@ -398,12 +397,6 @@ class Tabuleiro:
 
     def setPecaClicada(self, pecaClicada: Position):
         self.pecaClicada = pecaClicada
-
-    def set_proposta_empate(self, proposta_empate: bool):
-        self.proposta_empate = proposta_empate
-
-    def get_proposta_empate(self):
-        return self.proposta_empate
 
     def getPecasCapturadas(self):
         return self.pecasCapturadas
